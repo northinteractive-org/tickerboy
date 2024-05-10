@@ -97,6 +97,10 @@ resource "aws_lambda_function" "tickerboy_lambda" {
   filename         = "lambda_function.zip"
   source_code_hash = filebase64sha256("lambda_function.zip")
 
+  runtime = "python3.9"
+  handler = "lambda_function.lambda_handler"
+
+
   role        = aws_iam_role.lambda_role.arn
   timeout     = 300
   memory_size = 512
