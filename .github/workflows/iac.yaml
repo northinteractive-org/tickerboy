@@ -18,7 +18,7 @@ jobs:
 
       - name: Zip Lambda Function
         run: |
-          zip -r ../lambda/tsx_ticker_update/lambda_function.zip lambda.py
+          zip -r lambda_function.zip ../lambda/tsx_ticker_update/lambda.py
       
       - name: Set up Node.js
         uses: actions/setup-node@v2
