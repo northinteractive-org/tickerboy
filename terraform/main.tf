@@ -93,17 +93,9 @@ resource "aws_dynamodb_table" "tickerboy_stock_data" {
 # Lambda Function Resource
 resource "aws_lambda_function" "tickerboy_lambda" {
   function_name = "tickerboy_lambda"
-
-  # Code Source (Either inline or from S3)
-  # If you are using S3: 
-  # s3_bucket = "your-s3-bucket-name"
-  # s3_key    = "lambda_function.zip"
-  source_code_hash = filebase64sha256("../lambda/tsx_ticker_update/lambda_function.zip")
-
-  # Inline code (if you prefer)
-  # runtime     = "python3.9" 
-  # handler     = "lambda_function.lambda_handler"
-  # inline_code = file("lambda_function.py") # Make sure lambda_function.py is in the same directory
+  
+  filename         = "${path.root}/lambda/tsx_ticker_update/lambda_function.zip"
+  source_code_hash = filebase64sha256("${path.root}/lambda/tsx_ticker_update/lambda_function.zip")
 
   role        = aws_iam_role.lambda_role.arn
   timeout     = 300
