@@ -20,6 +20,8 @@ jobs:
         run: |
           cd ../lambda/tsx_ticker_update/
           zip -r ../../terraform/lambda_function.zip .
+          cd ../tsx_price_update
+          zip -r ../../terraform/lambda_function_2.zip .
           cd ../../terraform
         
       
