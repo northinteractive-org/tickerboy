@@ -6,9 +6,9 @@ provider "aws" {
 # Terraform Backend Configuration (S3)
 terraform {
   backend "s3" {
-    bucket         = "northinteractive-org-tickerboy-tfstate" 
-    key            = "stock-data-table/terraform.tfstate"
-    region         = "us-east-1"
+    bucket = "northinteractive-org-tickerboy-tfstate"
+    key    = "stock-data-table/terraform.tfstate"
+    region = "us-east-1"
   }
 }
 
@@ -47,7 +47,7 @@ resource "aws_iam_policy" "dynamodb_policy" {
           "dynamodb:PutItem",
           "dynamodb:BatchWriteItem"
         ]
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = aws_dynamodb_table.tickerboy_stock_data.arn
       }
     ]
@@ -64,9 +64,9 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attachment" {
 
 # DynamoDB Table Resource for Stock Data
 resource "aws_dynamodb_table" "tickerboy_stock_data" {
-  name           = "tickerboy_stock_data"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "Symbol"
+  name         = "tickerboy_stock_data"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "Symbol"
 
   attribute {
     name = "Symbol"
@@ -79,9 +79,9 @@ resource "aws_dynamodb_table" "tickerboy_stock_data" {
   }
 
   global_secondary_index {
-    name               = "SectorIndex"
-    hash_key           = "Sector"
-    projection_type    = "ALL"
+    name            = "SectorIndex"
+    hash_key        = "Sector"
+    projection_type = "ALL"
   }
 
   tags = {
@@ -98,7 +98,7 @@ resource "aws_lambda_function" "tickerboy_lambda" {
   # If you are using S3: 
   # s3_bucket = "your-s3-bucket-name"
   # s3_key    = "lambda_function.zip"
-  filename         = "../lambda/tsx_ticker_update/lambda_function.zip" 
+  filename         = "../lambda/tsx_ticker_update/lambda_function.zip"
   source_code_hash = filebase64sha256("lambda_function.zip")
 
   # Inline code (if you prefer)
@@ -106,8 +106,8 @@ resource "aws_lambda_function" "tickerboy_lambda" {
   # handler     = "lambda_function.lambda_handler"
   # inline_code = file("lambda_function.py") # Make sure lambda_function.py is in the same directory
 
-  role    = aws_iam_role.lambda_role.arn
-  timeout = 300
+  role        = aws_iam_role.lambda_role.arn
+  timeout     = 300
   memory_size = 512
 
   environment {
@@ -122,7 +122,7 @@ resource "aws_lambda_function" "tickerboy_lambda" {
 resource "aws_cloudwatch_event_rule" "monthly_trigger" {
   name                = "tickerboy_lambda_monthly_trigger"
   description         = "Triggers Tickerboy Lambda function monthly"
-  schedule_expression = "cron(0 0 1 * ? *)"  # Run at midnight on the 1st of every month
+  schedule_expression = "cron(0 0 1 * ? *)" # Run at midnight on the 1st of every month
 }
 
 # CloudWatch Event Target (Lambda)
