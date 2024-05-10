@@ -99,7 +99,7 @@ resource "aws_lambda_function" "tickerboy_lambda" {
   # s3_bucket = "your-s3-bucket-name"
   # s3_key    = "lambda_function.zip"
   filename         = "../lambda/tsx_ticker_update/lambda_function.zip"
-  source_code_hash = filebase64sha256("lambda_function.zip")
+  source_code_hash = filebase64sha256(filename)
 
   # Inline code (if you prefer)
   # runtime     = "python3.9" 
