@@ -93,7 +93,7 @@ resource "aws_dynamodb_table" "tickerboy_stock_data" {
 # Lambda Function Resource
 resource "aws_lambda_function" "tickerboy_lambda" {
   function_name = "tickerboy_lambda"
-  
+
   filename         = "${path.root}/lambda/tsx_ticker_update/lambda_function.zip"
   source_code_hash = filebase64sha256("${path.root}/lambda/tsx_ticker_update/lambda_function.zip")
 
