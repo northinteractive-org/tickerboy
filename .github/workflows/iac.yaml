@@ -21,6 +21,11 @@ jobs:
           cd ../lambda/tsx_ticker_update/
           zip -r lambda_function.zip lambda.py 
           cd ../../terraform/
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
           
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
