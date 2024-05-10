@@ -1,7 +1,7 @@
 import json
 import boto3
 import urllib3
-import os  # Import the 'os' module
+import os
 from datetime import datetime
 
 dynamodb = boto3.resource('dynamodb')
@@ -21,8 +21,15 @@ def lambda_handler(event, context):
 
         for line in lines[1:]:
             values = line.split('\t')
+            symbol = values[0]
+
+            # Check for empty Symbol
+            if not symbol: 
+                print(f"Skipping row with empty Symbol: {line}") 
+                continue  # Skip this row and move to the next
+
             item = {
-                'Symbol': values[0],
+                'Symbol': symbol,
                 'LastOpen': None,
                 'LastClose': None,
             }
