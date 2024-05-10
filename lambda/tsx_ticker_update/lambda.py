@@ -1,10 +1,11 @@
 import json
 import boto3
 import urllib3
+import os  # Import the 'os' module
 from datetime import datetime
 
 dynamodb = boto3.resource('dynamodb')
-table_name = 'tickerboy_stock_data'  # Replace with your table name
+table_name = os.environ['TABLE_NAME']  
 
 def lambda_handler(event, context):
     http = urllib3.PoolManager()
