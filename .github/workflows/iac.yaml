@@ -18,9 +18,9 @@ jobs:
 
       - name: Zip Lambda Function
         run: |
-          cd ../../lambda/tsx_ticker_update/
+          cd ../lambda/tsx_ticker_update/
           zip -r lambda_function.zip lambda.py 
-          cd ../../terraform/
+          cd ../terraform/
           
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
