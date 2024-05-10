@@ -18,7 +18,10 @@ jobs:
 
       - name: Zip Lambda Function
         run: |
-          zip -r lambda_function.zip ../lambda/tsx_ticker_update/lambda_function.py
+          cd ../lambda/tsx_ticker_update/
+          zip -r ../../terraform/lambda_function.zip .
+          ../../terraform
+        
       
       - name: Set up Node.js
         uses: actions/setup-node@v2
