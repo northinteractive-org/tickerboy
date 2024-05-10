@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "terraform_state_bucket" {
 }
 
 # DynamoDB Table Resource for Stock Data
-resource "aws_dynamodb_table" "stock_data" {
+resource "aws_dynamodb_table" "tickerboy_stock_data" {
   name           = "stock_data"  
   billing_mode   = "PAY_PER_REQUEST" 
   hash_key       = "Symbol"
