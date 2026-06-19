@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v8";
+  var BUILD_VERSION = "v9";
 
   var state = {
     manAge: 30,
@@ -38,6 +38,7 @@
 
   // -------------------- model --------------------
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function norm(v, a, b) { return clamp((v - a) / (b - a), 0, 1); }
 
   function ageRangeShare(min, max) {
     var num = 0, den = 0;
@@ -119,14 +120,14 @@
       personal: sh.personal,
       attraction: D.attractionScore(sh.height, sh.look),
       factors: [
-        { key: "Single",         val: single,                          ctrl: false },
-        { key: "Open to dating", val: open,                            ctrl: false },
-        { key: "Age accepted",   val: age,                             ctrl: false },
-        { key: "Height",         val: sh.height,                       ctrl: false },
-        { key: "Grooming & look", val: Math.min(sh.look, 1),           ctrl: true },
-        { key: "Background",     val: Math.min(sh.race, 1),            ctrl: false },
-        { key: "Venue + timing", val: sh.location,                     ctrl: true },
-        { key: "Delivery",       val: clamp(sh.delivery, 0, 1.6) / 1.6, ctrl: true }
+        { key: "single",   bar: single,                       raw: single },
+        { key: "open",     bar: open,                         raw: open },
+        { key: "age",      bar: age,                          raw: age },
+        { key: "height",   bar: norm(sh.height, 0.10, 0.95),  raw: sh.height },
+        { key: "look",     bar: norm(sh.look, 0.50, 1.60),    raw: sh.look },
+        { key: "race",     bar: norm(sh.race, 0.90, 1.06),    raw: sh.race },
+        { key: "venue",    bar: clamp(sh.location / 0.9, 0, 1), raw: sh.location },
+        { key: "delivery", bar: norm(sh.delivery, 0.50, 1.60), raw: sh.delivery }
       ],
       suitable: suitable,
       perNumber: p > 0 ? 1 / p : Infinity
@@ -331,19 +332,7 @@
       '<span>From height + grooming, fitness & hair — the physical basics. ' +
       'Grooming and fitness are the fastest to move.</span></div>';
 
-    // Helping / hurting bars
-    var bd = document.getElementById("breakdown");
-    bd.innerHTML = "";
-    r.factors.forEach(function (f) {
-      var pct = Math.round(f.val * 100);
-      var row = document.createElement("div");
-      row.className = "bar-row" + (f.ctrl ? " ctrl" : "");
-      row.innerHTML =
-        '<span class="bar-label">' + f.key + (f.ctrl ? ' <i>you control</i>' : '') + "</span>" +
-        '<span class="bar-track"><span class="bar-fill" style="width:' + pct + '%"></span></span>' +
-        '<span class="bar-val">' + pct + "%</span>";
-      bd.appendChild(row);
-    });
+    renderBreakdown(r);
 
     // Action suggestions
     var acts = suggestImprovements(state);
@@ -370,6 +359,79 @@
       '<div class="stat"><b>' + perNumber + "</b><span>approaches per number</span></div>";
 
     renderCalib(r);
+  }
+
+  // Plain-language meaning + control status + the move, per factor.
+  var FACTOR_META = {
+    single: {
+      label: "Single", tag: "range", tagText: "Place & range",
+      text: function (raw, s, lo, hi) {
+        return "About " + Math.round(raw * 100) + "% of women aged " + lo + "–" + hi +
+          " aren't married" + (localSingleFactor !== 1 ? " (your local data)" : "") + ".";
+      },
+      advice: "Bigger cities and wider/older ranges raise this — tap “Use my location” for real local numbers."
+    },
+    open: {
+      label: "Open to dating", tag: "fixed", tagText: "Fixed",
+      text: function (raw) { return "Of those single women, ~" + Math.round(raw * 100) + "% are actively open to dating right now."; },
+      advice: "Population-level reality — nothing to change here."
+    },
+    age: {
+      label: "Age fit", tag: "range", tagText: "Your range",
+      text: function (raw, s) { return "~" + Math.round(raw * 100) + "% of women in your range would be open to dating someone your age (" + s.manAge + ")."; },
+      advice: "Targeting closer to your own age lifts this; chasing much younger sinks it fast."
+    },
+    height: {
+      label: "Height", tag: "fixed", tagText: "Fixed",
+      text: function (raw, s) { return "How your height (" + ft(s.heightIn) + ") tends to land, on average."; },
+      advice: "Can't change it — so win on grooming, fitness, venue and delivery instead."
+    },
+    look: {
+      label: "Grooming & look", tag: "control", tagText: "You control",
+      text: function (raw) {
+        var d = raw < 0.95 ? "below average" : raw <= 1.12 ? "around average" : "above average";
+        return "Your grooming, fitness and presentation read as " + d + " right now.";
+      },
+      advice: "Your fastest win: a sharp haircut, clothes that actually fit, and steady gym time."
+    },
+    race: {
+      label: "Background", tag: "fixed", tagText: "Fixed",
+      text: function (raw) {
+        if (Math.abs(raw - 1) < 0.005) return "Neutral — no effect applied.";
+        return "A small population-level nudge (" + (raw > 1 ? "+" : "") + Math.round((raw - 1) * 100) + "%); not about you as an individual.";
+      },
+      advice: "Fixed and minor — don't give it a second thought."
+    },
+    venue: {
+      label: "Venue + timing", tag: "control", tagText: "You control",
+      text: function (raw, s) {
+        return "How receptive a " + D.VENUES[s.venue].label.toLowerCase() + " is on a " +
+          D.DAYS[s.dayType].label.toLowerCase() + " " + D.TIMES[s.timeOfDay].label.toLowerCase() + ".";
+      },
+      advice: "Go where women are open to it, at peak time — see “Best places” above."
+    },
+    delivery: {
+      label: "Delivery", tag: "control", tagText: "You control",
+      text: function (raw, s) { return "Your opener, body language and calibration: “" + D.CONFIDENCE[s.confidence].label + ".”"; },
+      advice: "The single biggest lever you own. Reps make it warm, relaxed and calibrated."
+    }
+  };
+
+  function renderBreakdown(r) {
+    var lo = Math.min(state.targetMin, state.targetMax);
+    var hi = Math.max(state.targetMin, state.targetMax);
+    document.getElementById("breakdown").innerHTML = r.factors.map(function (f) {
+      var m = FACTOR_META[f.key];
+      var strength = f.bar >= 0.6 ? "good" : f.bar >= 0.33 ? "mid" : "bad";
+      var w = Math.max(4, Math.round(f.bar * 100));
+      return '<div class="frow">' +
+        '<div class="frow-top"><span class="fname">' + m.label + '</span>' +
+        '<span class="ftag ' + m.tag + '">' + m.tagText + '</span></div>' +
+        '<div class="fbar"><span class="ffill ' + strength + '" style="width:' + w + '%"></span></div>' +
+        '<div class="fdesc">' + m.text(f.raw, state, lo, hi) + '</div>' +
+        (m.tag !== "fixed" ? '<div class="fdo">' + m.advice + '</div>' : '') +
+        '</div>';
+    }).join("");
   }
 
   function renderCeiling(r) {
