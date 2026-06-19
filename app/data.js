@@ -163,6 +163,39 @@
     "Mixed / other":     1.02
   };
 
+  // ---- Look / grooming (a rough, mostly-controllable attraction base) --
+  // Focused on factors with real, generalizable signal. Grooming, fitness,
+  // and facial hair are the levers a man can actually move. Eye/hair COLOR
+  // are intentionally omitted — the evidence for them is negligible.
+  var GROOM_LABELS = ["", "Unkempt", "Basic", "Average", "Sharp", "Impeccable"];
+  var BUILD_LABELS = ["", "Out of shape", "Soft", "Average", "Fit", "Athletic"];
+  var GROOM_MULT = [1, 0.82, 0.92, 1.00, 1.12, 1.25];
+  var BUILD_MULT = [1, 0.85, 0.93, 1.00, 1.10, 1.20];
+  var FACIAL = {
+    clean:   { label: "Clean-shaven", mult: 0.98 },
+    stubble: { label: "Stubble",      mult: 1.06 },
+    beard:   { label: "Full beard",   mult: 1.00 }
+  };
+  var HAIR = {
+    full:    { label: "Full head",            mult: 1.00 },
+    thinning:{ label: "Thinning",             mult: 0.96 },
+    shaved:  { label: "Shaved / bald (owned)", mult: 1.00 },
+    balding: { label: "Balding (unmanaged)",  mult: 0.90 }
+  };
+
+  function lookFactor(grooming, build, facial, hair) {
+    var g = GROOM_MULT[grooming] || 1;
+    var b = BUILD_MULT[build] || 1;
+    var f = (FACIAL[facial] || {}).mult || 1;
+    var h = (HAIR[hair] || {}).mult || 1;
+    return Math.max(0.5, Math.min(1.6, g * b * f * h));
+  }
+
+  // A fun 1–99 "base attraction" from the physical/grooming factors.
+  function attractionScore(heightFactor, look) {
+    return Math.max(1, Math.min(99, Math.round(heightFactor * look * 83)));
+  }
+
   // ---- Model functions -------------------------------------------------
 
   // P(a suitable woman finds your height acceptable). Logistic in inches,
@@ -195,6 +228,12 @@
     CONFIDENCE: CONFIDENCE,
     RACES: RACES,
     RACE_FACTORS: RACE_FACTORS,
+    GROOM_LABELS: GROOM_LABELS,
+    BUILD_LABELS: BUILD_LABELS,
+    FACIAL: FACIAL,
+    HAIR: HAIR,
+    lookFactor: lookFactor,
+    attractionScore: attractionScore,
     pHeight: pHeight,
     pAgeMatch: pAgeMatch,
     // National baseline: female share (15+) not currently married, used to

@@ -114,7 +114,30 @@ input[type="range"]::-moz-range-thumb {
 .conf-label { margin: 14px 0 0; text-align: center; color: var(--muted); }
 
 /* ---- Results ---- */
-.breakdown { margin-bottom: 20px; }
+.odds-explain { font-size: 15px; line-height: 1.5; color: var(--txt); margin: 0 0 18px; }
+.odds-explain b { color: var(--accent); }
+.sect { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 22px 0 12px; }
+
+.attraction { display: flex; align-items: center; gap: 14px; background: var(--card2); border-radius: 14px; padding: 16px; }
+.attr-score { font-size: 40px; font-weight: 800; line-height: 1; color: var(--accent); }
+.attr-score small { font-size: 16px; color: var(--muted); font-weight: 600; }
+.attr-meta { display: flex; flex-direction: column; gap: 4px; }
+.attr-meta b { font-size: 15px; }
+.attr-meta span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+.bar-row.ctrl .bar-label { color: var(--txt); }
+.bar-label i { color: var(--accent); font-style: normal; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+
+.actions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.action { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--card2); border-left: 3px solid var(--accent); border-radius: 10px; padding: 12px 14px; }
+.action-label { font-size: 13px; line-height: 1.35; }
+.action-gain { white-space: nowrap; font-weight: 800; font-size: 15px; }
+.action-gain em { display: block; font-style: normal; font-size: 11px; font-weight: 600; color: var(--accent); text-align: right; }
+.no-actions { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 20px; }
+
+.build-stamp { margin-top: 14px; font-size: 11px; color: var(--track); }
+
+.breakdown { margin-bottom: 4px; }
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 13px; }
 .bar-label { width: 96px; color: var(--muted); }
 .bar-track { flex: 1; height: 10px; background: var(--track); border-radius: 6px; overflow: hidden; }

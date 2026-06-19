@@ -11,10 +11,16 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
+  var BUILD_VERSION = "v6";
+
   var state = {
     manAge: 30,
     heightIn: 70,
     race: "Prefer not to say",
+    grooming: 3,
+    build: 3,
+    facialHair: "stubble",
+    hair: "full",
     targetMin: 25,
     targetMax: 35,
     venue: "coffee_shop",
@@ -27,7 +33,7 @@
   var localSingleFactor = 1.0;
   var localName = "";
 
-  var TOTAL_STEPS = 8;
+  var TOTAL_STEPS = 9;
   var step = 0;
 
   // -------------------- model --------------------
@@ -55,6 +61,7 @@
     var venue = D.VENUES[s.venue];
     return {
       height: D.pHeight(s.heightIn),
+      look: D.lookFactor(s.grooming, s.build, s.facialHair, s.hair),
       race: D.RACE_FACTORS[s.race] || 1,
       location: clamp(venue.receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9),
       delivery: D.CONFIDENCE[s.confidence].mult,
@@ -67,7 +74,7 @@
     var pS = clamp(D.interp(D.SINGLE_BY_AGE, herAge) * localSingleFactor, 0, 0.98);
     var pO = D.interp(D.OPEN_BY_AGE, herAge);
     var pA = D.pAgeMatch(s.manAge, herAge);
-    var base = clamp(pS * pO * pA * sh.height * sh.race * sh.location * sh.delivery, 0.005, 0.95);
+    var base = clamp(pS * pO * pA * sh.height * sh.look * sh.race * sh.location * sh.delivery, 0.005, 0.95);
     return clamp(base * sh.personal, 0.003, 0.97);
   }
 
@@ -110,18 +117,60 @@
       p: p,
       sessionP: sessionP,
       personal: sh.personal,
+      attraction: D.attractionScore(sh.height, sh.look),
       factors: [
-        { key: "Single",         val: single },
-        { key: "Open to dating", val: open },
-        { key: "Age accepted",   val: age },
-        { key: "Height",         val: sh.height },
-        { key: "Background",     val: Math.min(sh.race, 1) },
-        { key: "Venue + timing", val: sh.location },
-        { key: "Delivery",       val: clamp(sh.delivery, 0, 1.6) / 1.6 }
+        { key: "Single",         val: single,                          ctrl: false },
+        { key: "Open to dating", val: open,                            ctrl: false },
+        { key: "Age accepted",   val: age,                             ctrl: false },
+        { key: "Height",         val: sh.height,                       ctrl: false },
+        { key: "Grooming & look", val: Math.min(sh.look, 1),           ctrl: true },
+        { key: "Background",     val: Math.min(sh.race, 1),            ctrl: false },
+        { key: "Venue + timing", val: sh.location,                     ctrl: true },
+        { key: "Delivery",       val: clamp(sh.delivery, 0, 1.6) / 1.6, ctrl: true }
       ],
       suitable: suitable,
       perNumber: p > 0 ? 1 / p : Infinity
     };
+  }
+
+  // ---- Action engine: what moves your odds the most ----
+  // Each candidate is an improvement to a controllable lever; we measure its
+  // effect on the cumulative "≥1 this outing" probability.
+  function bestTiming(venue) {
+    var best = { t: "evening", d: "weekend", m: 0 };
+    ["morning", "afternoon", "evening", "late"].forEach(function (t) {
+      ["weekday", "weekend"].forEach(function (d) {
+        var m = D.timingMult(venue, t, d);
+        if (m > best.m) best = { t: t, d: d, m: m };
+      });
+    });
+    return best;
+  }
+
+  function suggestImprovements(s) {
+    var baseSession = compute(s).sessionP;
+    var cands = [];
+    function add(label, mod) {
+      var ns = Object.assign({}, s, mod);
+      var d = compute(ns).sessionP - baseSession;
+      if (d > 0.005) cands.push({ label: label, delta: d, session: compute(ns).sessionP });
+    }
+    if (s.confidence < 5) add("Sharpen your delivery — opener, calibration, relaxed exit", { confidence: 5 });
+    if (s.grooming < 5) add("Level up grooming & style — haircut, fit clothes, skincare", { grooming: 5 });
+    if (s.build < 5) add("Get in better shape", { build: 5 });
+    var bt = bestTiming(s.venue);
+    if (bt.t !== s.timeOfDay || bt.d !== s.dayType)
+      add("Go at peak time — " + D.DAYS[bt.d].label.toLowerCase() + " " + D.TIMES[bt.t].label.toLowerCase(), { timeOfDay: bt.t, dayType: bt.d });
+    var curRec = clamp(D.VENUES[s.venue].receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9);
+    if (curRec < 0.35) add("Approach somewhere more social — a lounge or bar", { venue: "lounge_social" });
+    var wider = { targetMin: clamp(Math.min(s.targetMin, s.targetMax) - 4, 18, 70),
+                  targetMax: clamp(Math.max(s.targetMin, s.targetMax) + 4, 18, 70) };
+    add("Widen the ages you'd approach (more candidates)", wider);
+    if (s.facialHair === "clean") add("Try light stubble", { facialHair: "stubble" });
+    if (s.hair === "balding") add("Own it — a clean shaved head beats a comb-over", { hair: "shaved" });
+
+    cands.sort(function (a, b) { return b.delta - a.delta; });
+    return cands.slice(0, 3);
   }
 
   // -------------------- rendering --------------------
@@ -218,7 +267,7 @@
     renderChart(state);
 
     if (SHARE) SHARE.updateUrl(state);
-    if (step === 7) renderResults(r);
+    if (step === TOTAL_STEPS - 1) renderResults(r);
   }
 
   function caption(r) {
@@ -228,18 +277,50 @@
   }
 
   function renderResults(r) {
+    var venueLabel = D.VENUES[state.venue].label.toLowerCase();
+    var suitable = Math.max(1, Math.round(r.suitable));
+    document.getElementById("oddsExplain").innerHTML =
+      "If you walk up to one woman in your age range, there's about <b>" + fmtPct(r.p) +
+      "%</b> she gives you her number. Over a typical " + venueLabel + " visit (~" + suitable +
+      " women your age), about <b>" + Math.round(r.sessionP * 100) +
+      "%</b> chance you leave with at least one.";
+
+    // Attraction score
+    var aEl = document.getElementById("attraction");
+    var sc = r.attraction;
+    var tier = sc >= 75 ? "Strong" : sc >= 55 ? "Solid" : sc >= 35 ? "Average" : "Room to grow";
+    aEl.innerHTML =
+      '<div class="attr-score">' + sc + '<small>/99</small></div>' +
+      '<div class="attr-meta"><b>Base attraction: ' + tier + '</b>' +
+      '<span>From height + grooming, fitness & hair — the physical basics. ' +
+      'Grooming and fitness are the fastest to move.</span></div>';
+
+    // Helping / hurting bars
     var bd = document.getElementById("breakdown");
     bd.innerHTML = "";
     r.factors.forEach(function (f) {
       var pct = Math.round(f.val * 100);
       var row = document.createElement("div");
-      row.className = "bar-row";
+      row.className = "bar-row" + (f.ctrl ? " ctrl" : "");
       row.innerHTML =
-        '<span class="bar-label">' + f.key + "</span>" +
+        '<span class="bar-label">' + f.key + (f.ctrl ? ' <i>you control</i>' : '') + "</span>" +
         '<span class="bar-track"><span class="bar-fill" style="width:' + pct + '%"></span></span>' +
         '<span class="bar-val">' + pct + "%</span>";
       bd.appendChild(row);
     });
+
+    // Action suggestions
+    var acts = suggestImprovements(state);
+    var ae = document.getElementById("actions");
+    if (acts.length === 0) {
+      ae.innerHTML = '<p class="no-actions">You\'ve maxed the levers you control here. Now it\'s reps — log your outcomes below.</p>';
+    } else {
+      ae.innerHTML = acts.map(function (a) {
+        return '<div class="action"><span class="action-label">' + a.label + '</span>' +
+          '<span class="action-gain">→ ' + Math.round(a.session * 100) + '% <em>+' +
+          Math.round(a.delta * 100) + 'pts</em></span></div>';
+      }).join("");
+    }
 
     var perNumber = isFinite(r.perNumber) ? Math.max(1, Math.round(r.perNumber)) : "—";
     document.getElementById("reality").innerHTML =
@@ -349,6 +430,10 @@
     document.getElementById("ageOut").textContent = state.manAge;
     document.getElementById("heightIn").value = state.heightIn;
     document.getElementById("heightOut").textContent = ft(state.heightIn);
+    document.getElementById("grooming").value = state.grooming;
+    document.getElementById("groomOut").textContent = D.GROOM_LABELS[state.grooming];
+    document.getElementById("build").value = state.build;
+    document.getElementById("buildOut").textContent = D.BUILD_LABELS[state.build];
     document.getElementById("race").value = state.race;
     document.getElementById("targetMin").value = state.targetMin;
     document.getElementById("minOut").textContent = state.targetMin;
@@ -379,9 +464,13 @@
       document.getElementById("confLabel").textContent = D.CONFIDENCE[k].label;
     });
     document.getElementById("confLabel").textContent = D.CONFIDENCE[state.confidence].label;
+    buildSegmented("facialHair", D.FACIAL, state.facialHair, function (k) { state.facialHair = k; });
+    buildSegmented("hair", D.HAIR, state.hair, function (k) { state.hair = k; });
 
     bindRange("manAge", "ageOut", function (v) { state.manAge = v; return v; });
     bindRange("heightIn", "heightOut", function (v) { state.heightIn = v; return ft(v); });
+    bindRange("grooming", "groomOut", function (v) { state.grooming = v; return D.GROOM_LABELS[v]; });
+    bindRange("build", "buildOut", function (v) { state.build = v; return D.BUILD_LABELS[v]; });
     bindRange("targetMin", "minOut", function (v) {
       state.targetMin = v;
       if (state.targetMin > state.targetMax) {
@@ -450,6 +539,11 @@
       state.confidence = Number(k);
     }, function (k) { document.getElementById("confLabel").textContent = D.CONFIDENCE[k].label; });
     document.getElementById("confLabel").textContent = D.CONFIDENCE[state.confidence].label;
+    buildSegmented("facialHair", D.FACIAL, state.facialHair, function (k) { state.facialHair = k; });
+    buildSegmented("hair", D.HAIR, state.hair, function (k) { state.hair = k; });
+
+    var ver = document.getElementById("buildVer");
+    if (ver) ver.textContent = BUILD_VERSION;
 
     showStep(0);
 

@@ -8,7 +8,8 @@
   // Short keys keep shared links compact.
   var MAP = {
     manAge: "a", heightIn: "h", race: "r", targetMin: "lo", targetMax: "hi",
-    venue: "v", timeOfDay: "t", dayType: "d", confidence: "c"
+    venue: "v", timeOfDay: "t", dayType: "d", confidence: "c",
+    grooming: "g", build: "b", facialHair: "fh", hair: "ha"
   };
 
   function encodeState(s) {
@@ -29,7 +30,7 @@
       var bits = pair.split("="), sk = inv[bits[0]];
       if (!sk) return;
       var val = decodeURIComponent(bits[1] || "");
-      var numeric = ["manAge", "heightIn", "targetMin", "targetMax", "confidence"];
+      var numeric = ["manAge", "heightIn", "targetMin", "targetMax", "confidence", "grooming", "build"];
       out[sk] = numeric.indexOf(sk) >= 0 ? Number(val) : val;
       found = true;
     });
