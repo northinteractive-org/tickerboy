@@ -44,10 +44,18 @@
   }
 
   // Factors that don't depend on the woman's age (shared by every point).
+  // Total adult-female population weight, used to size the venue pool by age.
+  var TOTAL_ADULT_W = (function () {
+    var s = 0;
+    for (var a = 18; a <= 90; a++) s += D.interp(D.FEMALE_AGE_WEIGHT, a);
+    return s;
+  })();
+
   function sharedFactors(s) {
     var venue = D.VENUES[s.venue];
     return {
       height: D.pHeight(s.heightIn),
+      race: D.RACE_FACTORS[s.race] || 1,
       location: clamp(venue.receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9),
       delivery: D.CONFIDENCE[s.confidence].mult,
       personal: STORE.factor()
@@ -59,7 +67,7 @@
     var pS = clamp(D.interp(D.SINGLE_BY_AGE, herAge) * localSingleFactor, 0, 0.98);
     var pO = D.interp(D.OPEN_BY_AGE, herAge);
     var pA = D.pAgeMatch(s.manAge, herAge);
-    var base = clamp(pS * pO * pA * sh.height * sh.location * sh.delivery, 0.005, 0.95);
+    var base = clamp(pS * pO * pA * sh.height * sh.race * sh.location * sh.delivery, 0.005, 0.95);
     return clamp(base * sh.personal, 0.003, 0.97);
   }
 
@@ -75,36 +83,43 @@
     var hi = Math.max(s.targetMin, s.targetMax);
     var sh = sharedFactors(s);
 
-    var sumW = 0, single = 0, open = 0, age = 0, pSum = 0;
+    var footfall = D.VENUES[s.venue].footfall;
+    var sumW = 0, single = 0, open = 0, age = 0, pSum = 0, logSurvive = 0;
     for (var a = lo; a <= hi; a++) {
       var w = D.interp(D.FEMALE_AGE_WEIGHT, a);
+      var pa = probAtAge(s, a, sh);
       sumW += w;
       single += w * D.interp(D.SINGLE_BY_AGE, a);
       open += w * D.interp(D.OPEN_BY_AGE, a);
       age += w * D.pAgeMatch(s.manAge, a);
-      pSum += w * probAtAge(s, a, sh);
+      pSum += w * pa;
+      // Expected women of this age at the venue, and their contribution to
+      // the chance of NOT getting any number (compounded across the pool).
+      var nA = footfall * w / TOTAL_ADULT_W;
+      logSurvive += nA * Math.log(1 - Math.min(pa, 0.97));
     }
     if (sumW === 0) sumW = 1;
     single = clamp((single / sumW) * localSingleFactor, 0, 0.98);
     open /= sumW; age /= sumW;
 
-    var p = pSum / sumW;
-    var share = ageRangeShare(lo, hi);
-    var suitable = D.VENUES[s.venue].footfall * share;
+    var p = pSum / sumW;                 // average per-approach quality
+    var sessionP = 1 - Math.exp(logSurvive); // chance of >=1 number this outing
+    var suitable = footfall * ageRangeShare(lo, hi);
 
     return {
       p: p,
+      sessionP: sessionP,
       personal: sh.personal,
       factors: [
         { key: "Single",         val: single },
         { key: "Open to dating", val: open },
         { key: "Age accepted",   val: age },
         { key: "Height",         val: sh.height },
+        { key: "Background",     val: Math.min(sh.race, 1) },
         { key: "Venue + timing", val: sh.location },
         { key: "Delivery",       val: clamp(sh.delivery, 0, 1.6) / 1.6 }
       ],
       suitable: suitable,
-      perOuting: suitable * p,
       perNumber: p > 0 ? 1 / p : Infinity
     };
   }
@@ -208,7 +223,8 @@
 
   function caption(r) {
     var n = isFinite(r.perNumber) ? Math.max(1, Math.round(r.perNumber)) : "lots of";
-    return "About " + n + " approaches per number.";
+    return "~" + n + " approaches per number · " + Math.round(r.sessionP * 100) +
+      "% to get ≥1 this outing";
   }
 
   function renderResults(r) {
@@ -226,13 +242,10 @@
     });
 
     var perNumber = isFinite(r.perNumber) ? Math.max(1, Math.round(r.perNumber)) : "—";
-    var perOuting = r.perOuting >= 1
-      ? "~" + r.perOuting.toFixed(1)
-      : (r.perOuting > 0 ? "<1" : "—");
     document.getElementById("reality").innerHTML =
-      '<div class="stat"><b>' + perNumber + "</b><span>approaches per number</span></div>" +
+      '<div class="stat"><b>' + Math.round(r.sessionP * 100) + "%</b><span>chance of ≥1 number this outing</span></div>" +
       '<div class="stat"><b>' + Math.round(r.suitable) + "</b><span>women in your range here</span></div>" +
-      '<div class="stat"><b>' + perOuting + "</b><span>numbers per outing</span></div>";
+      '<div class="stat"><b>' + perNumber + "</b><span>approaches per number</span></div>";
 
     renderCalib(r);
   }
