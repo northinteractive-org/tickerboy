@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v11";
+  var BUILD_VERSION = "v12";
 
   var state = {
     manAge: 30,
@@ -506,6 +506,23 @@
     document.getElementById("openers").innerHTML = rows + note;
   }
 
+  // ---- Welcome ----
+  function showWelcome() {
+    var w = document.getElementById("welcome");
+    if (w) { w.hidden = false; w.scrollTop = 0; }
+  }
+  function dismissWelcome() {
+    var w = document.getElementById("welcome");
+    if (w) w.hidden = true;
+    try { localStorage.setItem("tb_welcomed", "1"); } catch (e) {}
+  }
+  function initWelcome() {
+    var seen;
+    try { seen = localStorage.getItem("tb_welcomed"); } catch (e) {}
+    var w = document.getElementById("welcome");
+    if (w) w.hidden = !!seen;
+  }
+
   // ---- Theme ----
   function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
@@ -697,6 +714,9 @@
 
     document.getElementById("locBtn").addEventListener("click", useLocation);
     document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+    document.getElementById("startBtn").addEventListener("click", dismissWelcome);
+    var brandEl = document.querySelector(".brand");
+    if (brandEl) brandEl.addEventListener("click", showWelcome);
 
     document.getElementById("shareBtn").addEventListener("click", function () {
       if (!SHARE || !lastResult) return;
@@ -733,6 +753,7 @@
   // -------------------- boot --------------------
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
+    initWelcome();
     if (SHARE) {
       var urlState = SHARE.readUrlState();
       if (urlState) Object.keys(urlState).forEach(function (k) { state[k] = urlState[k]; });
