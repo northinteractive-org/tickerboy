@@ -46,7 +46,19 @@ window.TB_SUPA = {
     });
   },
 
-  submitContribution: function (c) { return client.from("contributions").insert(c); }
+  submitContribution: function (c) { return client.from("contributions").insert(c); },
+
+  savePreferences: function (p) {
+    return client.auth.getUser().then(function (r) {
+      var u = r.data && r.data.user;
+      if (!u) return { error: { message: "Not signed in" } };
+      return client.from("preferences").insert(p).then(function (res) {
+        // Mark the profile as a woman respondent (best-effort, non-blocking).
+        client.from("profiles").update({ gender: "woman", updated_at: new Date().toISOString() }).eq("id", u.id);
+        return res;
+      });
+    });
+  }
 };
 
 document.dispatchEvent(new Event("tb:supa"));
