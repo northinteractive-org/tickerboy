@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v13";
+  var BUILD_VERSION = "v14";
 
   var state = {
     manAge: 30,
@@ -580,26 +580,83 @@
     if (currentUser) { if (confirm("Sign out?")) window.TB_SUPA.signOut(); }
     else promptSignIn();
   }
-  function openContribute() { var c = document.getElementById("contribute"); if (c) { c.hidden = false; c.scrollTop = 0; } }
-  function closeContribute() { var c = document.getElementById("contribute"); if (c) c.hidden = true; }
-  function submitContribution() {
-    var status = document.getElementById("contribStatus");
-    var body = document.getElementById("contribBody").value.trim();
-    if (!body) { status.textContent = "Write a sentence or two first."; return; }
+  // ---- Female track ----
+  var femaleState = {
+    age: 29, prefMin: 27, prefMax: 40, heightMin: "",
+    wLooks: 3, wConf: 3, wEffort: 3, intent: "open",
+    venues: {}, times: {}
+  };
+  var femaleBuilt = false;
+
+  function buildChips(containerId, options, store) {
+    var box = document.getElementById(containerId);
+    box.innerHTML = "";
+    Object.keys(options).forEach(function (key) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = options[key];
+      b.addEventListener("click", function () {
+        if (store[key]) { delete store[key]; b.classList.remove("on"); }
+        else { store[key] = true; b.classList.add("on"); }
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function buildFemale() {
+    if (femaleBuilt) return;
+    femaleBuilt = true;
+    bindRange("fAge", "fAgeOut", function (v) { femaleState.age = v; return v; });
+    bindRange("fPrefMin", "fMinOut", function (v) {
+      femaleState.prefMin = v;
+      if (v > femaleState.prefMax) { femaleState.prefMax = v; document.getElementById("fPrefMax").value = v; document.getElementById("fMaxOut").textContent = v; }
+      return v;
+    });
+    bindRange("fPrefMax", "fMaxOut", function (v) {
+      femaleState.prefMax = v;
+      if (v < femaleState.prefMin) { femaleState.prefMin = v; document.getElementById("fPrefMin").value = v; document.getElementById("fMinOut").textContent = v; }
+      return v;
+    });
+    bindRange("fLooks", "fLooksOut", function (v) { femaleState.wLooks = v; return v; });
+    bindRange("fConf", "fConfOut", function (v) { femaleState.wConf = v; return v; });
+    bindRange("fEffort", "fEffortOut", function (v) { femaleState.wEffort = v; return v; });
+    document.getElementById("fHeight").addEventListener("change", function () { femaleState.heightMin = this.value; });
+    buildSegmented("fIntent", { looking: { label: "Looking" }, open: { label: "Open to it" }, not_looking: { label: "Not looking" } },
+      femaleState.intent, function (k) { femaleState.intent = k; });
+    var venueOpts = {};
+    Object.keys(D.VENUES).forEach(function (k) { if (k !== "all_average") venueOpts[k] = D.VENUES[k].label; });
+    buildChips("fVenues", venueOpts, femaleState.venues);
+    var timeOpts = {}; Object.keys(D.TIMES).forEach(function (k) { timeOpts[k] = D.TIMES[k].label; });
+    buildChips("fTimes", timeOpts, femaleState.times);
+  }
+
+  function openFemale() { buildFemale(); var c = document.getElementById("female"); if (c) { c.hidden = false; c.scrollTop = 0; } }
+  function closeFemale() { var c = document.getElementById("female"); if (c) c.hidden = true; }
+
+  function submitFemale() {
+    var status = document.getElementById("fStatus");
     if (!currentUser) {
-      status.textContent = "Sign in first (just an email) so we can protect and credit your words.";
+      status.textContent = "Sign in first (just an email) so your answers are saved and private.";
       promptSignIn();
       return;
     }
-    var venue = document.getElementById("contribVenue").value.trim();
-    status.textContent = "Sending…";
-    window.TB_SUPA.submitContribution({ kind: "green_flag", body: body, venue: venue || null })
-      .then(function (res) {
-        if (res.error) { status.textContent = "Couldn't send: " + res.error.message; return; }
-        status.textContent = "Thank you. This genuinely helps.";
-        document.getElementById("contribBody").value = "";
-        document.getElementById("contribVenue").value = "";
-      });
+    var green = document.getElementById("fGreen").value.trim();
+    var turn = document.getElementById("fTurnoffs").value.trim();
+    status.textContent = "Saving…";
+    window.TB_SUPA.savePreferences({
+      age: femaleState.age,
+      pref_age_min: Math.min(femaleState.prefMin, femaleState.prefMax),
+      pref_age_max: Math.max(femaleState.prefMin, femaleState.prefMax),
+      height_min_in: femaleState.heightMin ? Number(femaleState.heightMin) : null,
+      w_looks: femaleState.wLooks, w_confidence: femaleState.wConf, w_effort: femaleState.wEffort,
+      intent: femaleState.intent,
+      open_venues: Object.keys(femaleState.venues),
+      open_times: Object.keys(femaleState.times),
+      green_flags: green || null,
+      turnoffs: turn || null
+    }).then(function (res) {
+      if (res && res.error) { status.textContent = "Couldn't save: " + res.error.message; return; }
+      status.textContent = "Thank you. You just made this more honest for every guy who uses it.";
+    });
   }
   function initSupa() {
     function go() {
@@ -788,9 +845,9 @@
     var brandEl = document.querySelector(".brand");
     if (brandEl) brandEl.addEventListener("click", showWelcome);
     document.getElementById("accountBtn").addEventListener("click", handleAccount);
-    document.getElementById("welcomeContribute").addEventListener("click", openContribute);
-    document.getElementById("contribClose").addEventListener("click", closeContribute);
-    document.getElementById("contribSubmit").addEventListener("click", submitContribution);
+    document.getElementById("welcomeContribute").addEventListener("click", openFemale);
+    document.getElementById("fClose").addEventListener("click", closeFemale);
+    document.getElementById("fSubmit").addEventListener("click", submitFemale);
 
     document.getElementById("shareBtn").addEventListener("click", function () {
       if (!SHARE || !lastResult) return;

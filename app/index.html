@@ -28,23 +28,76 @@
         </ul>
         <button id="startBtn" class="btn wide welcome-cta" type="button">Find my odds</button>
         <p class="welcome-women">Reading this as a woman? It's built to make the men around you warmer and more respectful, not less. We'd love your take on what a genuinely good approach feels like.</p>
-        <button id="welcomeContribute" class="welcome-link" type="button">Share what a good approach feels like →</button>
+        <button id="welcomeContribute" class="welcome-link" type="button">I'm a woman — share my preferences →</button>
       </div>
     </section>
 
     <button id="accountBtn" class="account-btn" type="button">Sign in</button>
     <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light / dark mode">☀</button>
 
-    <section id="contribute" class="welcome" hidden>
+    <section id="female" class="welcome" hidden>
       <div class="welcome-inner">
-        <span class="welcome-eyebrow">Help shape this</span>
-        <h1 class="welcome-h1">What makes an approach feel good?</h1>
-        <p class="welcome-sub">You know the difference between a warm hello and a creepy one better than any dataset. Tell us what lands, what doesn't, and what you wish men understood. Real answers shape the coaching other people see.</p>
-        <textarea id="contribBody" class="contrib-input" rows="5" placeholder="A good approach feels like…"></textarea>
-        <input id="contribVenue" class="select contrib-venue" type="text" placeholder="Where? (optional, e.g. coffee shop)" />
-        <button id="contribSubmit" class="btn wide" type="button">Send it in</button>
-        <p class="contrib-status" id="contribStatus"></p>
-        <button id="contribClose" class="btn ghost wide" type="button">Back</button>
+        <span class="welcome-eyebrow">Help shape the data</span>
+        <h1 class="welcome-h1">Tell us what actually works.</h1>
+        <p class="welcome-sub">You know what a good approach feels like better than any dataset. Set your honest preferences below. It's quick, it's private, and it makes the guidance men get more accurate and more respectful.</p>
+
+        <div class="fsection">
+          <label class="field-label">Your age</label>
+          <output class="big" id="fAgeOut">29</output>
+          <input type="range" id="fAge" min="18" max="70" value="29" />
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">Men you'd consider, by age</label>
+          <div class="range-row"><label>From <output id="fMinOut">27</output></label><input type="range" id="fPrefMin" min="18" max="80" value="27" /></div>
+          <div class="range-row"><label>To <output id="fMaxOut">40</output></label><input type="range" id="fPrefMax" min="18" max="80" value="40" /></div>
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">Height: does it matter?</label>
+          <select id="fHeight" class="select">
+            <option value="">Doesn't matter</option>
+            <option value="64">At least 5'4"</option>
+            <option value="66">At least 5'6"</option>
+            <option value="68">At least 5'8"</option>
+            <option value="70">At least 5'10"</option>
+            <option value="72">At least 6'0"</option>
+            <option value="74">At least 6'2"</option>
+          </select>
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">What matters most? (1 barely, 5 a lot)</label>
+          <div class="range-row"><label>Looks &amp; physical <output id="fLooksOut">3</output></label><input type="range" id="fLooks" min="1" max="5" value="3" /></div>
+          <div class="range-row"><label>Confidence &amp; how he carries himself <output id="fConfOut">3</output></label><input type="range" id="fConf" min="1" max="5" value="3" /></div>
+          <div class="range-row"><label>Effort &amp; grooming <output id="fEffortOut">3</output></label><input type="range" id="fEffort" min="1" max="5" value="3" /></div>
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">Right now you're</label>
+          <div class="segmented" id="fIntent"></div>
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">Where would a respectful hello be welcome?</label>
+          <div class="chips" id="fVenues"></div>
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">When are you open to it?</label>
+          <div class="chips" id="fTimes"></div>
+        </div>
+
+        <div class="fsection">
+          <label class="field-label">A good approach feels like</label>
+          <textarea id="fGreen" class="contrib-input" rows="3" placeholder="In your words"></textarea>
+          <label class="field-label">What kills it instantly?</label>
+          <textarea id="fTurnoffs" class="contrib-input" rows="3" placeholder="Be honest"></textarea>
+        </div>
+
+        <button id="fSubmit" class="btn wide" type="button">Submit my preferences</button>
+        <p class="contrib-status" id="fStatus"></p>
+        <button id="fClose" class="btn ghost wide" type="button">Back</button>
       </div>
     </section>
 
