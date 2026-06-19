@@ -43,44 +43,65 @@
     return den > 0 ? num / den : 0;
   }
 
+  // Factors that don't depend on the woman's age (shared by every point).
+  function sharedFactors(s) {
+    var venue = D.VENUES[s.venue];
+    return {
+      height: D.pHeight(s.heightIn),
+      location: clamp(venue.receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9),
+      delivery: D.CONFIDENCE[s.confidence].mult,
+      personal: STORE.factor()
+    };
+  }
+
+  // Full per-approach probability for a target of exactly `herAge`.
+  function probAtAge(s, herAge, sh) {
+    var pS = clamp(D.interp(D.SINGLE_BY_AGE, herAge) * localSingleFactor, 0, 0.98);
+    var pO = D.interp(D.OPEN_BY_AGE, herAge);
+    var pA = D.pAgeMatch(s.manAge, herAge);
+    var base = clamp(pS * pO * pA * sh.height * sh.location * sh.delivery, 0.005, 0.95);
+    return clamp(base * sh.personal, 0.003, 0.97);
+  }
+
+  // Probability curve across her age — drives the live chart.
+  function buildCurve(s, aMin, aMax) {
+    var sh = sharedFactors(s), pts = [];
+    for (var a = aMin; a <= aMax; a++) pts.push({ age: a, p: probAtAge(s, a, sh) });
+    return pts;
+  }
+
   function compute(s) {
     var lo = Math.min(s.targetMin, s.targetMax);
     var hi = Math.max(s.targetMin, s.targetMax);
+    var sh = sharedFactors(s);
 
-    var sumW = 0, single = 0, open = 0, age = 0;
+    var sumW = 0, single = 0, open = 0, age = 0, pSum = 0;
     for (var a = lo; a <= hi; a++) {
       var w = D.interp(D.FEMALE_AGE_WEIGHT, a);
       sumW += w;
       single += w * D.interp(D.SINGLE_BY_AGE, a);
       open += w * D.interp(D.OPEN_BY_AGE, a);
       age += w * D.pAgeMatch(s.manAge, a);
+      pSum += w * probAtAge(s, a, sh);
     }
     if (sumW === 0) sumW = 1;
     single = clamp((single / sumW) * localSingleFactor, 0, 0.98);
     open /= sumW; age /= sumW;
 
-    var height = D.pHeight(s.heightIn);
-    var venue = D.VENUES[s.venue];
-    var location = clamp(venue.receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9);
-    var delivery = D.CONFIDENCE[s.confidence].mult;
-
-    var pBase = clamp(single * open * age * height * location * delivery, 0.005, 0.95);
-    var personal = STORE.factor();
-    var p = clamp(pBase * personal, 0.003, 0.97);
-
+    var p = pSum / sumW;
     var share = ageRangeShare(lo, hi);
-    var suitable = venue.footfall * share;
+    var suitable = D.VENUES[s.venue].footfall * share;
 
     return {
       p: p,
-      personal: personal,
+      personal: sh.personal,
       factors: [
         { key: "Single",         val: single },
         { key: "Open to dating", val: open },
         { key: "Age accepted",   val: age },
-        { key: "Height",         val: height },
-        { key: "Venue + timing", val: location },
-        { key: "Delivery",       val: clamp(delivery, 0, 1.6) / 1.6 }
+        { key: "Height",         val: sh.height },
+        { key: "Venue + timing", val: sh.location },
+        { key: "Delivery",       val: clamp(sh.delivery, 0, 1.6) / 1.6 }
       ],
       suitable: suitable,
       perOuting: suitable * p,
@@ -117,6 +138,57 @@
     deltaTimer = setTimeout(function () { el.style.opacity = 0; }, 1400);
   }
 
+  // ---- Live probability curve (odds vs her age) ----
+  var CH = { w: 320, h: 120, padL: 6, padR: 6, padT: 12, padB: 16, aMin: 18, aMax: 60 };
+
+  function cx(age) {
+    return CH.padL + (age - CH.aMin) / (CH.aMax - CH.aMin) * (CH.w - CH.padL - CH.padR);
+  }
+  function cy(p, scale) {
+    return (CH.h - CH.padB) - (p / scale) * (CH.h - CH.padT - CH.padB);
+  }
+
+  function renderChart(s) {
+    var svg = document.getElementById("curveSvg");
+    if (!svg) return;
+    var pts = buildCurve(s, CH.aMin, CH.aMax);
+
+    var maxP = 0, peak = pts[0];
+    pts.forEach(function (pt) { if (pt.p > maxP) { maxP = pt.p; peak = pt; } });
+    // Mostly-fixed scale so delivery/height/venue visibly grow the hump,
+    // expanding only for unusually strong scenarios.
+    var scale = Math.max(0.25, maxP * 1.1);
+
+    var line = "", area = "";
+    pts.forEach(function (pt, i) {
+      var x = cx(pt.age).toFixed(1), y = cy(pt.p, scale).toFixed(1);
+      line += (i ? "L" : "M") + x + " " + y + " ";
+    });
+    var x0 = cx(pts[0].age).toFixed(1), xN = cx(pts[pts.length - 1].age).toFixed(1);
+    var baseY = (CH.h - CH.padB).toFixed(1);
+    area = line + "L" + xN + " " + baseY + " L" + x0 + " " + baseY + " Z";
+
+    var bx0 = cx(Math.min(s.targetMin, s.targetMax));
+    var bx1 = cx(Math.max(s.targetMin, s.targetMax));
+    var color = lastResult && lastResult.p < 0.05 ? "#ef4444"
+              : lastResult && lastResult.p < 0.15 ? "#f59e0b" : "#34d399";
+
+    svg.innerHTML =
+      '<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.45"/>' +
+        '<stop offset="100%" stop-color="' + color + '" stop-opacity="0.02"/>' +
+      '</linearGradient></defs>' +
+      '<rect x="' + bx0.toFixed(1) + '" y="' + CH.padT + '" width="' + (bx1 - bx0).toFixed(1) +
+        '" height="' + (CH.h - CH.padT - CH.padB) + '" fill="#ffffff" opacity="0.07"/>' +
+      '<path d="' + area + '" fill="url(#cg)"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round"/>' +
+      '<circle cx="' + cx(peak.age).toFixed(1) + '" cy="' + cy(peak.p, scale).toFixed(1) +
+        '" r="3.5" fill="#fff" stroke="' + color + '" stroke-width="2"/>';
+
+    var peakEl = document.getElementById("chartPeak");
+    if (peakEl) peakEl.textContent = "Peak " + fmtPct(peak.p) + "% @ age " + peak.age;
+  }
+
   function render() {
     var r = compute(state);
     lastResult = r;
@@ -128,6 +200,7 @@
     document.getElementById("gaugePct").textContent = fmtPct(r.p) + "%";
     document.getElementById("gaugeCaption").textContent = caption(r);
     showDelta(r.p);
+    renderChart(state);
 
     if (SHARE) SHARE.updateUrl(state);
     if (step === 7) renderResults(r);
