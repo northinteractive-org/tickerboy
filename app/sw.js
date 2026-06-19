@@ -1,5 +1,6 @@
-/* sw.js — minimal offline app-shell cache. */
-var CACHE = "cold-approach-odds-v1";
+/* sw.js — offline app shell with a network-first strategy so updates
+ * always land when the user is online, and the app still works offline. */
+var CACHE = "cold-approach-odds-v3";
 var ASSETS = [
   "./", "./index.html", "./styles.css",
   "./data.js", "./census.js", "./store.js", "./share.js", "./app.js",
@@ -20,15 +21,16 @@ self.addEventListener("activate", function (e) {
 
 self.addEventListener("fetch", function (e) {
   var url = new URL(e.request.url);
-  // Only cache-first our own same-origin app shell; let API calls hit network.
-  if (url.origin !== location.origin) return;
+  // Let cross-origin requests (Census, FCC) go straight to the network.
+  if (url.origin !== location.origin || e.request.method !== "GET") return;
+  // Network-first: fetch fresh, update the cache, fall back to cache offline.
   e.respondWith(
-    caches.match(e.request).then(function (hit) {
-      return hit || fetch(e.request).then(function (resp) {
-        var copy = resp.clone();
-        caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
-        return resp;
-      }).catch(function () { return hit; });
+    fetch(e.request).then(function (resp) {
+      var copy = resp.clone();
+      caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+      return resp;
+    }).catch(function () {
+      return caches.match(e.request);
     })
   );
 });
