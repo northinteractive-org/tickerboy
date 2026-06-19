@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v9";
+  var BUILD_VERSION = "v10";
 
   var state = {
     manAge: 30,
@@ -156,19 +156,19 @@
       var d = compute(ns).sessionP - baseSession;
       if (d > 0.005) cands.push({ label: label, delta: d, session: compute(ns).sessionP });
     }
-    if (s.confidence < 5) add("Sharpen your delivery — opener, calibration, relaxed exit", { confidence: 5 });
-    if (s.grooming < 5) add("Level up grooming & style — haircut, fit clothes, skincare", { grooming: 5 });
+    if (s.confidence < 5) add("Sharpen your delivery. Opener, calibration, relaxed exit.", { confidence: 5 });
+    if (s.grooming < 5) add("Level up grooming and style. Haircut, clothes that fit, skincare.", { grooming: 5 });
     if (s.build < 5) add("Get in better shape", { build: 5 });
     var bt = bestTiming(s.venue);
     if (bt.t !== s.timeOfDay || bt.d !== s.dayType)
-      add("Go at peak time — " + D.DAYS[bt.d].label.toLowerCase() + " " + D.TIMES[bt.t].label.toLowerCase(), { timeOfDay: bt.t, dayType: bt.d });
+      add("Go at peak time: " + D.DAYS[bt.d].label.toLowerCase() + " " + D.TIMES[bt.t].label.toLowerCase(), { timeOfDay: bt.t, dayType: bt.d });
     var curRec = clamp(D.VENUES[s.venue].receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9);
-    if (curRec < 0.35) add("Approach somewhere more social — a lounge or bar", { venue: "lounge_social" });
+    if (curRec < 0.35) add("Approach somewhere more social, like a lounge or bar", { venue: "lounge_social" });
     var wider = { targetMin: clamp(Math.min(s.targetMin, s.targetMax) - 4, 18, 70),
                   targetMax: clamp(Math.max(s.targetMin, s.targetMax) + 4, 18, 70) };
-    add("Widen the ages you'd approach (more candidates)", wider);
+    add("Open up to a wider age range for more shots", wider);
     if (s.facialHair === "clean") add("Try light stubble", { facialHair: "stubble" });
-    if (s.hair === "balding") add("Own it — a clean shaved head beats a comb-over", { hair: "shaved" });
+    if (s.hair === "balding") add("Own it. A clean shaved head beats a comb-over.", { hair: "shaved" });
 
     cands.sort(function (a, b) { return b.delta - a.delta; });
     return cands.slice(0, 3);
@@ -309,18 +309,18 @@
 
   function caption(r) {
     var n = isFinite(r.perNumber) ? Math.max(1, Math.round(r.perNumber)) : "lots of";
-    return "~" + n + " approaches per number · " + Math.round(r.sessionP * 100) +
-      "% to get ≥1 this outing";
+    return "About " + n + " approaches per yes · " + Math.round(r.sessionP * 100) +
+      "% to leave with a number this outing";
   }
 
   function renderResults(r) {
     var venueLabel = D.VENUES[state.venue].label.toLowerCase();
     var suitable = Math.max(1, Math.round(r.suitable));
     document.getElementById("oddsExplain").innerHTML =
-      "If you walk up to one woman in your age range, there's about <b>" + fmtPct(r.p) +
-      "%</b> she gives you her number. Over a typical " + venueLabel + " visit (~" + suitable +
-      " women your age), about <b>" + Math.round(r.sessionP * 100) +
-      "%</b> chance you leave with at least one.";
+      "Walk up to one woman in your range and about <b>" + fmtPct(r.p) +
+      "%</b> say yes to giving you their number. Work a whole " + venueLabel + " (around " + suitable +
+      " women your age) and your shot at leaving with at least one climbs to about <b>" +
+      Math.round(r.sessionP * 100) + "%</b>.";
 
     // Attraction score
     var aEl = document.getElementById("attraction");
@@ -329,8 +329,7 @@
     aEl.innerHTML =
       '<div class="attr-score">' + sc + '<small>/99</small></div>' +
       '<div class="attr-meta"><b>Base attraction: ' + tier + '</b>' +
-      '<span>From height + grooming, fitness & hair — the physical basics. ' +
-      'Grooming and fitness are the fastest to move.</span></div>';
+      '<span>Looks are a small slice of the math. What actually moves your odds, you control. Lean in.</span></div>';
 
     renderBreakdown(r);
 
@@ -338,7 +337,7 @@
     var acts = suggestImprovements(state);
     var ae = document.getElementById("actions");
     if (acts.length === 0) {
-      ae.innerHTML = '<p class="no-actions">You\'ve maxed the levers you control here. Now it\'s reps — log your outcomes below.</p>';
+      ae.innerHTML = '<p class="no-actions">You\'ve maxed the levers you control here. Now it\'s reps. Go get them, then log your outcomes below.</p>';
     } else {
       ae.innerHTML = acts.map(function (a) {
         return '<div class="action"><span class="action-label">' + a.label + '</span>' +
@@ -366,25 +365,25 @@
     single: {
       label: "Single", tag: "range", tagText: "Place & range",
       text: function (raw, s, lo, hi) {
-        return "About " + Math.round(raw * 100) + "% of women aged " + lo + "–" + hi +
+        return "About " + Math.round(raw * 100) + "% of women aged " + lo + " to " + hi +
           " aren't married" + (localSingleFactor !== 1 ? " (your local data)" : "") + ".";
       },
-      advice: "Bigger cities and wider/older ranges raise this — tap “Use my location” for real local numbers."
+      advice: "Big cities and wider or older ranges push this up. Tap Use my location for your real numbers."
     },
     open: {
       label: "Open to dating", tag: "fixed", tagText: "Fixed",
-      text: function (raw) { return "Of those single women, ~" + Math.round(raw * 100) + "% are actively open to dating right now."; },
-      advice: "Population-level reality — nothing to change here."
+      text: function (raw) { return "About " + Math.round(raw * 100) + "% of single women actually want to date right now."; },
+      advice: "That's just the math of the room, not you. Nothing to fix here."
     },
     age: {
       label: "Age fit", tag: "range", tagText: "Your range",
-      text: function (raw, s) { return "~" + Math.round(raw * 100) + "% of women in your range would be open to dating someone your age (" + s.manAge + ")."; },
-      advice: "Targeting closer to your own age lifts this; chasing much younger sinks it fast."
+      text: function (raw, s) { return "About " + Math.round(raw * 100) + "% of women in your range are open to a guy your age (" + s.manAge + ")."; },
+      advice: "Aim closer to your own age and this climbs. Chase much younger and it collapses."
     },
     height: {
       label: "Height", tag: "fixed", tagText: "Fixed",
       text: function (raw, s) { return "How your height (" + ft(s.heightIn) + ") tends to land, on average."; },
-      advice: "Can't change it — so win on grooming, fitness, venue and delivery instead."
+      advice: "You can't change it, and in person it matters far less than a photo would. Win on everything else."
     },
     look: {
       label: "Grooming & look", tag: "control", tagText: "You control",
@@ -392,28 +391,28 @@
         var d = raw < 0.95 ? "below average" : raw <= 1.12 ? "around average" : "above average";
         return "Your grooming, fitness and presentation read as " + d + " right now.";
       },
-      advice: "Your fastest win: a sharp haircut, clothes that actually fit, and steady gym time."
+      advice: "Your biggest fast win. Fresh haircut, clothes that fit, and regular gym time."
     },
     race: {
       label: "Background", tag: "fixed", tagText: "Fixed",
       text: function (raw) {
-        if (Math.abs(raw - 1) < 0.005) return "Neutral — no effect applied.";
-        return "A small population-level nudge (" + (raw > 1 ? "+" : "") + Math.round((raw - 1) * 100) + "%); not about you as an individual.";
+        if (Math.abs(raw - 1) < 0.005) return "Neutral. No effect applied.";
+        return "A tiny population-level nudge (" + (raw > 1 ? "+" : "") + Math.round((raw - 1) * 100) + "%). It says nothing about you.";
       },
-      advice: "Fixed and minor — don't give it a second thought."
+      advice: "Tiny and fixed. Don't give it a second thought."
     },
     venue: {
       label: "Venue + timing", tag: "control", tagText: "You control",
       text: function (raw, s) {
-        return "How receptive a " + D.VENUES[s.venue].label.toLowerCase() + " is on a " +
+        return "How open a " + D.VENUES[s.venue].label.toLowerCase() + " is on a " +
           D.DAYS[s.dayType].label.toLowerCase() + " " + D.TIMES[s.timeOfDay].label.toLowerCase() + ".";
       },
-      advice: "Go where women are open to it, at peak time — see “Best places” above."
+      advice: "Pick a friendlier room at a better hour. See Best places above."
     },
     delivery: {
       label: "Delivery", tag: "control", tagText: "You control",
-      text: function (raw, s) { return "Your opener, body language and calibration: “" + D.CONFIDENCE[s.confidence].label + ".”"; },
-      advice: "The single biggest lever you own. Reps make it warm, relaxed and calibrated."
+      text: function (raw, s) { return "Your opener, body language and read on the moment: " + D.CONFIDENCE[s.confidence].label.toLowerCase() + "."; },
+      advice: "The lever that matters most, and it's pure skill. Practice it and everything moves."
     }
   };
 
@@ -429,7 +428,9 @@
         '<span class="ftag ' + m.tag + '">' + m.tagText + '</span></div>' +
         '<div class="fbar"><span class="ffill ' + strength + '" style="width:' + w + '%"></span></div>' +
         '<div class="fdesc">' + m.text(f.raw, state, lo, hi) + '</div>' +
-        (m.tag !== "fixed" ? '<div class="fdo">' + m.advice + '</div>' : '') +
+        (m.tag === "fixed"
+          ? '<div class="fnote">' + m.advice + '</div>'
+          : '<div class="fdo">' + m.advice + '</div>') +
         '</div>';
     }).join("");
   }
@@ -446,10 +447,10 @@
         '<div class="ceil-arrow">→</div>' +
         '<div class="ceil-max"><span>Your ceiling</span><b>' + max + '%</b></div>' +
       '</div>' +
-      '<p class="ceil-play"><b>The play:</b> a ' + venue.toLowerCase() + ' on a ' + when +
-      ', delivery dialed to “charismatic & practiced,” grooming &amp; fitness maxed' +
-      (state.hair === "balding" ? ", hair shaved clean" : "") +
-      '. That\'s the most you can do without changing height, age, or who you\'re into.</p>';
+      '<p class="ceil-play"><b>Your play:</b> hit a ' + venue.toLowerCase() + ' on a ' + when +
+      ' with your delivery sharp and your grooming and fitness dialed in' +
+      (state.hair === "balding" ? ', hair shaved clean' : '') +
+      '. Same face, same height, same you. Just better habits and a smarter room.</p>';
   }
 
   function renderVenueRanking() {
@@ -468,16 +469,21 @@
 
   function renderCoaching(r) {
     var p = r.p;
-    var n50 = (p > 0 && p < 1) ? Math.max(1, Math.ceil(Math.log(0.5) / Math.log(1 - p))) : "—";
+    var n50 = (p > 0 && p < 1) ? Math.max(1, Math.ceil(Math.log(0.5) / Math.log(1 - p))) : "lots of";
+    var ethos =
+      '<div class="coach ethos"><b>Why not just use the apps?</b>' +
+      '<span>Apps shrink you to a photo, and that game is rigged for almost every guy. ' +
+      'In person she feels your energy, your humor, your calm. That\'s where a normal man wins. ' +
+      'Go where it\'s real.</span></div>';
     var dyn =
-      '<div class="coach dyn"><b>It\'s volume + skill, not luck</b>' +
-      '<span>At your ~' + fmtPct(p) + '% per approach, about <b>' + n50 +
-      ' solid approaches</b> gives you a coin-flip at your first number. Every “no” is just ' +
-      'data moving you toward a yes — not a verdict on you.</span></div>';
+      '<div class="coach dyn"><b>It\'s a numbers game you can win</b>' +
+      '<span>At about <b>' + fmtPct(p) + '%</b> per approach, roughly <b>' + n50 +
+      ' solid tries</b> gets you a coin-flip at your first number. Every no moves you closer. ' +
+      'Volume plus skill, not luck.</span></div>';
     var tips = D.COACHING.map(function (c) {
-      return '<div class="coach"><b>' + c.t + '</b><span>' + c.b + '</span></div>';
+      return '<div class="coach"><span class="coach-cat">' + c.c + '</span><b>' + c.t + '</b><span>' + c.b + '</span></div>';
     }).join("");
-    document.getElementById("coaching").innerHTML = dyn + tips;
+    document.getElementById("coaching").innerHTML = ethos + dyn + tips;
   }
 
   function renderOpeners() {
@@ -489,7 +495,7 @@
         (o.s === "warm" ? "Warm" : "Direct") + '</span><span class="op-text">' + o.t + '</span></div>';
     }).join("");
     var note = lowReceptivity
-      ? '<p class="op-note">Read the room here — this is a low-receptivity spot, so only approach if she seems open and unhurried.</p>'
+      ? '<p class="op-note">Read the room here. This is a tough spot, so only go if she seems open and not rushing.</p>'
       : '';
     document.getElementById("openers").innerHTML = rows + note;
   }
@@ -521,13 +527,13 @@
     var st = STORE.stats();
     var el = document.getElementById("calib");
     if (st.n === 0) {
-      el.textContent = "No logs yet — uses the base model.";
+      el.textContent = "Log your real approaches and these numbers start learning you.";
       return;
     }
-    var dir = r.personal >= 1 ? "+" + Math.round((r.personal - 1) * 100) + "%"
-                              : "-" + Math.round((1 - r.personal) * 100) + "%";
-    el.textContent = "Calibrated to " + st.n + " approach" + (st.n === 1 ? "" : "es") +
-      " (" + st.successes + " number" + (st.successes === 1 ? "" : "s") + "): your odds " + dir + ".";
+    var dir = r.personal >= 1 ? "up " + Math.round((r.personal - 1) * 100) + "%"
+                              : "down " + Math.round((1 - r.personal) * 100) + "%";
+    el.textContent = "Tuned to your " + st.n + " logged approach" + (st.n === 1 ? "" : "es") +
+      " (" + st.successes + " number" + (st.successes === 1 ? "" : "s") + "). Your odds adjusted " + dir + ".";
   }
 
   function showStep(i) {
@@ -582,12 +588,12 @@
       .then(function (pos) { return C.reverseGeocode(pos.lat, pos.lon); })
       .then(function (loc) {
         localName = loc.name;
-        status.textContent = "📍 " + loc.name + " — fetching local data…";
+        status.textContent = "📍 " + loc.name + ". Fetching local data…";
         return C.localSingleFactor(loc.stateFips, loc.countyFips, D.NATIONAL_FEMALE_SINGLE_SHARE)
           .then(function (res) {
             localSingleFactor = res.factor;
             var pct = Math.round(res.share * 100);
-            status.textContent = "📍 " + loc.name + " — " + pct +
+            status.textContent = "📍 " + loc.name + ". " + pct +
               "% of women here are single (local data applied).";
             render();
           })
@@ -602,11 +608,11 @@
                 return;
               }
             }
-            status.textContent = "📍 " + loc.name + " — using national averages.";
+            status.textContent = "📍 " + loc.name + ". Using national averages.";
           });
       })
       .catch(function () {
-        status.textContent = "Couldn't get your location — using national averages.";
+        status.textContent = "Couldn't get your location. Using national averages.";
       });
   }
 

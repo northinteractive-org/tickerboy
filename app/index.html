@@ -15,6 +15,11 @@
 
     <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light / dark mode">☀</button>
 
+    <div class="brand">
+      <span class="brand-name">COLD APPROACH</span>
+      <span class="brand-tag">Put the app down. Go say hi.</span>
+    </div>
+
     <!-- Live, always-updating estimate -->
     <header class="gauge-wrap" aria-live="polite">
       <svg class="gauge" viewBox="0 0 120 120" role="img" aria-label="Success probability">
@@ -26,7 +31,7 @@
         <div class="gauge-sub">per approach</div>
       </div>
       <div class="gauge-delta" id="gaugeDelta" aria-hidden="true"></div>
-      <p class="gauge-caption" id="gaugeCaption">Answer the prompts — the odds update live.</p>
+      <p class="gauge-caption" id="gaugeCaption">Answer a few questions. Your odds update live.</p>
     </header>
 
     <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
@@ -45,21 +50,21 @@
 
       <div class="step" data-step="0">
         <h2>How old are you?</h2>
-        <p class="hint">Sets the band of women statistically open to your age.</p>
+        <p class="hint">This decides which women are into a guy your age.</p>
         <output class="big" id="ageOut">30</output>
         <input type="range" id="manAge" min="18" max="70" value="30" />
       </div>
 
       <div class="step" data-step="1" hidden>
         <h2>How tall are you?</h2>
-        <p class="hint">Women's preference curves reward height — with a plateau.</p>
+        <p class="hint">Height helps, but it plateaus fast. Above average is plenty, and you can't change it anyway.</p>
         <output class="big" id="heightOut">5'10"</output>
         <input type="range" id="heightIn" min="58" max="84" value="70" />
       </div>
 
       <div class="step" data-step="2" hidden>
         <h2>Your look</h2>
-        <p class="hint">A rough base attraction. Grooming and fitness are the levers you can actually move.</p>
+        <p class="hint">Your base attraction. Grooming and fitness are the levers you actually move, so move them.</p>
         <div class="range-row">
           <label>Grooming &amp; style: <output id="groomOut">Average</output></label>
           <input type="range" id="grooming" min="1" max="5" value="3" />
@@ -76,13 +81,13 @@
 
       <div class="step" data-step="3" hidden>
         <h2>Your background</h2>
-        <p class="hint">Optional. Small, population-level effect from aggregate dating data — see method notes.</p>
+        <p class="hint">Optional, and tiny. Pick Prefer not to say to skip it.</p>
         <select id="race" class="select"></select>
       </div>
 
       <div class="step" data-step="4" hidden>
         <h2>Who are you interested in?</h2>
-        <p class="hint">Defines your candidate pool by age.</p>
+        <p class="hint">This is your candidate pool. Wider means more shots at a yes.</p>
         <div class="range-row">
           <label>From <output id="minOut">25</output></label>
           <input type="range" id="targetMin" min="18" max="70" value="25" />
@@ -95,7 +100,7 @@
 
       <div class="step" data-step="5" hidden>
         <h2>Where are you approaching?</h2>
-        <p class="hint">Venues differ wildly in how welcome a cold approach is.</p>
+        <p class="hint">Some rooms welcome a hello. Some don't. It matters a lot.</p>
         <select id="venue" class="select"></select>
         <button id="locBtn" class="btn ghost wide" type="button">📍 Use my location for local data</button>
         <p class="loc-status" id="locStatus"></p>
@@ -103,7 +108,7 @@
 
       <div class="step" data-step="6" hidden>
         <h2>When?</h2>
-        <p class="hint">Timing shifts how receptive a venue is.</p>
+        <p class="hint">When you go changes how open the room is.</p>
         <label class="field-label">Time of day</label>
         <div class="segmented" id="timeOfDay"></div>
         <label class="field-label" style="margin-top:18px">Day</label>
@@ -112,7 +117,7 @@
 
       <div class="step" data-step="7" hidden>
         <h2>How's your delivery?</h2>
-        <p class="hint">The biggest lever you actually control. Be honest.</p>
+        <p class="hint">Your biggest lever, and it's all skill. Be honest, then go build it.</p>
         <div class="segmented" id="confidence"></div>
         <p class="conf-label" id="confLabel"></p>
       </div>
@@ -123,15 +128,16 @@
 
         <div class="attraction" id="attraction"></div>
 
-        <h3 class="sect">Your ceiling — the best you can do</h3>
+        <h3 class="sect">Your ceiling</h3>
+        <p class="sect-note">The best you can do without changing your face, height, or age.</p>
         <div class="ceiling" id="ceiling"></div>
 
         <h3 class="sect">Best places to approach</h3>
-        <p class="sect-note">Each spot at its best time, as you are now.</p>
+        <p class="sect-note">Every spot at its best time, as you are right now.</p>
         <div class="venue-rank" id="venueRank"></div>
 
         <h3 class="sect">What's helping &amp; hurting</h3>
-        <p class="sect-note">Green is working for you, amber/red is dragging — with what to do about each.</p>
+        <p class="sect-note">Green is working for you. Amber and red are dragging. Each one tells you what to do.</p>
         <div class="breakdown" id="breakdown"></div>
 
         <h3 class="sect">Do this to improve your odds</h3>
@@ -148,7 +154,7 @@
         <button id="shareBtn" class="btn wide" type="button">Share my odds</button>
 
         <div class="logbox">
-          <p class="log-title">Tried it? Log the outcome to calibrate your odds.</p>
+          <p class="log-title">Tried it for real? Log what happened and these numbers learn you.</p>
           <div class="log-actions">
             <button id="logYes" class="btn small" type="button">✅ Got the number</button>
             <button id="logNo" class="btn ghost small" type="button">❌ No number</button>
@@ -158,24 +164,23 @@
 
         <details class="method">
           <summary>How this is calculated</summary>
-          <p>The <b>gauge</b> is your chance per single approach — the product of
-             independent factors: <em>single → open to dating → accepts your age
-             → clears the height bar → background → venue receptive (adjusted for
-             timing) → your delivery</em>, then nudged by your logged outcomes.</p>
-          <p>The <b>"≥1 this outing"</b> number is cumulative: it compounds your
-             per-approach odds across all the women in your age range at the venue,
-             so widening your range or picking a busier spot raises it — even though
-             your per-approach average can dip. <em>Background</em> uses small,
-             population-level multipliers from aggregate dating-app reply-rate data
-             (controversial, not about any individual); pick "Prefer not to say" to
-             keep it neutral.</p>
-          <p>Numbers are directional estimates from public research (U.S.
-             Census/ACS marital status, Pew Research on singles, OkCupid
-             age-preference data, height-preference surveys). With a free
+          <p>The <b>gauge</b> is your chance on one approach. We multiply the
+             factors that all have to line up: she's single, she wants to date,
+             she's open to your age, your height, your look, your background, how
+             open the venue is, and your delivery. Then we tune it to the outcomes
+             you log.</p>
+          <p>The <b>"leave with a number"</b> figure is cumulative. It stacks your
+             per-approach odds across every woman your age in the room, so a wider
+             range or a busier spot lifts it even when your per-approach average
+             dips. <b>Background</b> uses tiny population-level numbers from
+             aggregate dating-app data. It says nothing about you, and Prefer not
+             to say keeps it neutral.</p>
+          <p>These are directional estimates from public research: U.S. Census and
+             ACS marital status, Pew Research on singles, OkCupid age-preference
+             data, and height-preference studies. Add a free
              <a href="https://api.census.gov/data/key_signup.html" target="_blank" rel="noopener">Census API key</a>
-             added, the "single" factor is refined with real local data for your
-             county. This is entertainment and a nudge toward what you control —
-             not a guarantee. Approach respectfully and read the room.</p>
+             and the "single" number uses real data for your county. Treat it as a
+             guide, not a guarantee. Always approach with respect and read the room.</p>
         </details>
       </div>
 
@@ -188,13 +193,13 @@
     <footer class="refs">
       <h3>Data &amp; references</h3>
       <ul>
-        <li><a href="https://www.census.gov/programs-surveys/acs" target="_blank" rel="noopener">U.S. Census Bureau — American Community Survey (ACS)</a>: marital status by age and sex; local county data via the <a href="https://www.census.gov/data/developers/data-sets/acs-5year.html" target="_blank" rel="noopener">ACS 5-year API</a>.</li>
+        <li><a href="https://www.census.gov/programs-surveys/acs" target="_blank" rel="noopener">U.S. Census Bureau, American Community Survey</a>: marital status by age and sex, plus local county data via the <a href="https://www.census.gov/data/developers/data-sets/acs-5year.html" target="_blank" rel="noopener">ACS 5-year API</a>.</li>
         <li><a href="https://www.pewresearch.org/short-reads/2020/08/20/a-profile-of-single-americans/" target="_blank" rel="noopener">Pew Research Center</a>: share of single adults open to dating or a relationship.</li>
         <li>Christian Rudder, <a href="https://www.gwern.net/docs/psychology/okcupid/index.html" target="_blank" rel="noopener"><em>Dataclysm</em> / OkCupid data</a>: age-preference patterns in dating.</li>
         <li>Height-preference research, e.g. <a href="https://link.springer.com/article/10.1007/s10508-013-0227-5" target="_blank" rel="noopener">Stulp et al. (2013)</a>: women's partner-height preferences.</li>
-        <li><a href="https://geo.fcc.gov/api/census/" target="_blank" rel="noopener">FCC Area API</a>: latitude/longitude → county (keyless reverse geocoding).</li>
+        <li><a href="https://geo.fcc.gov/api/census/" target="_blank" rel="noopener">FCC Area API</a>: turns your location into a county (no key needed).</li>
       </ul>
-      <p class="refs-note">Venue receptivity, foot-traffic, timing, and delivery figures are the author's estimates, not measured rates. Curves are fit by judgment, not regression. This tool is for entertainment and self-reflection — approach people respectfully and read the room.</p>
+      <p class="refs-note">Venue, foot-traffic, timing, and delivery numbers are our estimates, not measured rates. Treat the whole thing as a guide for building a real-world skill, not gospel. Approach with respect and read the room.</p>
       <p class="build-stamp">Build <span id="buildVer">—</span></p>
     </footer>
   </main>
