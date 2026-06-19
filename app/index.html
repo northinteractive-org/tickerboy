@@ -56,12 +56,29 @@
       </div>
 
       <div class="step" data-step="2" hidden>
-        <h2>Your background</h2>
-        <p class="hint">Optional. Left neutral by default — see the method notes for why.</p>
-        <select id="race" class="select"></select>
+        <h2>Your look</h2>
+        <p class="hint">A rough base attraction. Grooming and fitness are the levers you can actually move.</p>
+        <div class="range-row">
+          <label>Grooming &amp; style: <output id="groomOut">Average</output></label>
+          <input type="range" id="grooming" min="1" max="5" value="3" />
+        </div>
+        <div class="range-row">
+          <label>Build / fitness: <output id="buildOut">Average</output></label>
+          <input type="range" id="build" min="1" max="5" value="3" />
+        </div>
+        <label class="field-label">Facial hair</label>
+        <div class="segmented" id="facialHair"></div>
+        <label class="field-label" style="margin-top:18px">Hair</label>
+        <div class="segmented" id="hair"></div>
       </div>
 
       <div class="step" data-step="3" hidden>
+        <h2>Your background</h2>
+        <p class="hint">Optional. Small, population-level effect from aggregate dating data — see method notes.</p>
+        <select id="race" class="select"></select>
+      </div>
+
+      <div class="step" data-step="4" hidden>
         <h2>Who are you interested in?</h2>
         <p class="hint">Defines your candidate pool by age.</p>
         <div class="range-row">
@@ -74,7 +91,7 @@
         </div>
       </div>
 
-      <div class="step" data-step="4" hidden>
+      <div class="step" data-step="5" hidden>
         <h2>Where are you approaching?</h2>
         <p class="hint">Venues differ wildly in how welcome a cold approach is.</p>
         <select id="venue" class="select"></select>
@@ -82,7 +99,7 @@
         <p class="loc-status" id="locStatus"></p>
       </div>
 
-      <div class="step" data-step="5" hidden>
+      <div class="step" data-step="6" hidden>
         <h2>When?</h2>
         <p class="hint">Timing shifts how receptive a venue is.</p>
         <label class="field-label">Time of day</label>
@@ -91,16 +108,25 @@
         <div class="segmented" id="dayType"></div>
       </div>
 
-      <div class="step" data-step="6" hidden>
+      <div class="step" data-step="7" hidden>
         <h2>How's your delivery?</h2>
         <p class="hint">The biggest lever you actually control. Be honest.</p>
         <div class="segmented" id="confidence"></div>
         <p class="conf-label" id="confLabel"></p>
       </div>
 
-      <div class="step" data-step="7" hidden>
+      <div class="step" data-step="8" hidden>
         <h2>Your odds</h2>
+        <p class="odds-explain" id="oddsExplain"></p>
+
+        <div class="attraction" id="attraction"></div>
+
+        <h3 class="sect">What's helping &amp; hurting</h3>
         <div class="breakdown" id="breakdown"></div>
+
+        <h3 class="sect">Do this to improve your odds</h3>
+        <div class="actions" id="actions"></div>
+
         <div class="reality" id="reality"></div>
 
         <button id="shareBtn" class="btn wide" type="button">Share my odds</button>
@@ -153,6 +179,7 @@
         <li><a href="https://geo.fcc.gov/api/census/" target="_blank" rel="noopener">FCC Area API</a>: latitude/longitude → county (keyless reverse geocoding).</li>
       </ul>
       <p class="refs-note">Venue receptivity, foot-traffic, timing, and delivery figures are the author's estimates, not measured rates. Curves are fit by judgment, not regression. This tool is for entertainment and self-reflection — approach people respectfully and read the room.</p>
+      <p class="build-stamp">Build <span id="buildVer">—</span></p>
     </footer>
   </main>
 
