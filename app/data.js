@@ -196,6 +196,59 @@
     return Math.max(1, Math.min(99, Math.round(heightFactor * look * 83)));
   }
 
+  // ---- Openers (mix of warm/situational and bold/direct, by context) --
+  var OPENERS = {
+    nightlife: [
+      { s: "warm", t: "This song is either great or terrible and I can't decide — what's your verdict?" },
+      { s: "direct", t: "I saw you from across the room and I'd regret it if I didn't come say hi. I'm ___." }
+    ],
+    social: [
+      { s: "warm", t: "How do you know people here?" },
+      { s: "direct", t: "I don't know anyone here yet and you seemed like the best person to fix that. I'm ___." }
+    ],
+    campus: [
+      { s: "warm", t: "This'll sound like a line, but do you actually know where ___ is? …also, I'm ___." },
+      { s: "direct", t: "I'm supposed to be studying but I'd much rather introduce myself. I'm ___." }
+    ],
+    daytime: [
+      { s: "warm", t: "Sorry to interrupt — what are you drinking? I need a new go-to and I trust a stranger's taste." },
+      { s: "direct", t: "I'm making myself be brave for once: I noticed you and wanted to say hi. I'm ___." }
+    ],
+    outdoor: [
+      { s: "warm", t: "Okay, your dog is objectively cooler than mine. What's their name?" },
+      { s: "direct", t: "I'll keep this quick so you can get back to your day — I just wanted to come meet you. I'm ___." }
+    ],
+    errand: [
+      { s: "warm", t: "Important question: which of these do I actually buy? You look like you'd know." },
+      { s: "direct", t: "This is random, but I saw you and didn't want to walk past without saying hi. I'm ___." }
+    ],
+    fitness: [
+      { s: "warm", t: "Quick one between sets — are you almost done with this? …and I'm ___, by the way." },
+      { s: "direct", t: "I'll let you get back to it, but I had to introduce myself first. I'm ___." }
+    ],
+    transit: [
+      { s: "warm", t: "I've got about two stops of courage in me, so — hi, I'm ___." },
+      { s: "direct", t: "I only have a minute before my stop, so I'll just say it: I wanted to meet you. I'm ___." }
+    ],
+    travel: [
+      { s: "warm", t: "Where are you headed? I'm collecting strangers' travel plans to feel better about mine." },
+      { s: "direct", t: "We've got time to kill anyway — I'm ___, figured I'd say hi properly." }
+    ],
+    any: [
+      { s: "warm", t: "This is a little out of the blue, but I saw you and wanted to introduce myself. I'm ___." },
+      { s: "direct", t: "I'm just going to be honest — I think you're cute and I wanted to come meet you. I'm ___." }
+    ]
+  };
+
+  // ---- Evidence-informed coaching principles (static) ------------------
+  var COACHING = [
+    { t: "Approach in the first few seconds", b: "The longer you wait, the bigger it feels and the more she notices you hovering. Decide, then move within ~3 seconds — hesitation is what kills approaches, not the line." },
+    { t: "Warmth beats the perfect line", b: "Research on first impressions consistently finds tone of voice and body language outweigh the actual words. A relaxed smile, open posture, and steady (not staring) eye contact carry the moment." },
+    { t: "Make it situational", b: "Comment on something real in the shared environment. It's lower-pressure than a rehearsed line, reads as genuine, and gives her an easy, natural way to respond." },
+    { t: "Respect the no — gracefully", b: "A warm exit ('No worries — have a great day') protects her comfort and your composure. Calibrated, respectful men get far better reactions and never look desperate." },
+    { t: "Anchor, don't linger", b: "Within a minute or two, either get a number or exit on a high note. Long, aimless conversations cool off; a confident 'I'd love to keep talking — what's your number?' converts interest before it fades." }
+  ];
+
   // ---- Model functions -------------------------------------------------
 
   // P(a suitable woman finds your height acceptable). Logistic in inches,
@@ -234,6 +287,8 @@
     HAIR: HAIR,
     lookFactor: lookFactor,
     attractionScore: attractionScore,
+    OPENERS: OPENERS,
+    COACHING: COACHING,
     pHeight: pHeight,
     pAgeMatch: pAgeMatch,
     // National baseline: female share (15+) not currently married, used to

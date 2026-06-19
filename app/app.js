@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v7";
+  var BUILD_VERSION = "v8";
 
   var state = {
     manAge: 30,
@@ -173,15 +173,48 @@
     return cands.slice(0, 3);
   }
 
+  // Rank every venue by session odds (each at its own best timing, current you).
+  function rankVenues(s) {
+    return Object.keys(D.VENUES).map(function (key) {
+      var bt = bestTiming(key);
+      var ns = Object.assign({}, s, { venue: key, timeOfDay: bt.t, dayType: bt.d });
+      return { key: key, label: D.VENUES[key].label, session: compute(ns).sessionP, isCurrent: key === s.venue };
+    }).sort(function (a, b) { return b.session - a.session; });
+  }
+
+  // The ceiling: fixed traits + range, every controllable maxed, best venue/timing.
+  function computeCeiling(s) {
+    var maxed = Object.assign({}, s, {
+      grooming: 5, build: 5, confidence: 5,
+      facialHair: "stubble",
+      hair: s.hair === "balding" ? "shaved" : s.hair
+    });
+    var best = null;
+    Object.keys(D.VENUES).forEach(function (key) {
+      var bt = bestTiming(key);
+      var ns = Object.assign({}, maxed, { venue: key, timeOfDay: bt.t, dayType: bt.d });
+      var sp = compute(ns).sessionP;
+      if (!best || sp > best.session) best = { session: sp, venue: key, t: bt.t, d: bt.d };
+    });
+    return best;
+  }
+
   // -------------------- rendering --------------------
   var GAUGE_CIRC = 2 * Math.PI * 52;
   var lastResult = null;
   var prevP = null;
   var deltaTimer = null;
 
-  // Semantic colors (kept in sync with the gauge/curve palette).
-  var C_BAD = "#fb7185", C_MID = "#fbbf24", C_GOOD = "#34d399";
-  function tierColor(p) { return p < 0.05 ? C_BAD : p < 0.15 ? C_MID : C_GOOD; }
+  // Semantic colors read live from CSS vars so they adapt to the theme.
+  function cssVar(name, fallback) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+  function tierColor(p) {
+    return p < 0.05 ? cssVar("--bad", "#fb7185")
+         : p < 0.15 ? cssVar("--mid", "#fbbf24")
+         : cssVar("--good", "#34d399");
+  }
 
   // Adaptive precision: more decimals as the odds get small, so slider
   // nudges stay visible even down around a couple of percent.
@@ -200,7 +233,7 @@
     if (Math.abs(dPts) < 0.005) { el.style.opacity = 0; return; }
     var up = dPts > 0;
     el.textContent = (up ? "▲ +" : "▼ ") + dPts.toFixed(2) + " pts";
-    el.style.color = up ? C_GOOD : C_BAD;
+    el.style.color = up ? cssVar("--good", "#34d399") : cssVar("--bad", "#fb7185");
     el.style.opacity = 1;
     if (deltaTimer) clearTimeout(deltaTimer);
     deltaTimer = setTimeout(function () { el.style.opacity = 0; }, 1400);
@@ -325,6 +358,11 @@
       }).join("");
     }
 
+    renderCeiling(r);
+    renderVenueRanking();
+    renderCoaching(r);
+    renderOpeners();
+
     var perNumber = isFinite(r.perNumber) ? Math.max(1, Math.round(r.perNumber)) : "—";
     document.getElementById("reality").innerHTML =
       '<div class="stat"><b>' + Math.round(r.sessionP * 100) + "%</b><span>chance of ≥1 number this outing</span></div>" +
@@ -332,6 +370,89 @@
       '<div class="stat"><b>' + perNumber + "</b><span>approaches per number</span></div>";
 
     renderCalib(r);
+  }
+
+  function renderCeiling(r) {
+    var c = computeCeiling(state);
+    var venue = D.VENUES[c.venue].label;
+    var when = D.DAYS[c.d].label.toLowerCase() + " " + D.TIMES[c.t].label.toLowerCase();
+    var now = Math.round(r.sessionP * 100);
+    var max = Math.round(c.session * 100);
+    document.getElementById("ceiling").innerHTML =
+      '<div class="ceil-track">' +
+        '<div class="ceil-now"><span>You now</span><b>' + now + '%</b></div>' +
+        '<div class="ceil-arrow">→</div>' +
+        '<div class="ceil-max"><span>Your ceiling</span><b>' + max + '%</b></div>' +
+      '</div>' +
+      '<p class="ceil-play"><b>The play:</b> a ' + venue.toLowerCase() + ' on a ' + when +
+      ', delivery dialed to “charismatic & practiced,” grooming &amp; fitness maxed' +
+      (state.hair === "balding" ? ", hair shaved clean" : "") +
+      '. That\'s the most you can do without changing height, age, or who you\'re into.</p>';
+  }
+
+  function renderVenueRanking() {
+    var ranked = rankVenues(state);
+    var top = ranked.slice(0, 7);
+    var max = top[0].session || 1;
+    document.getElementById("venueRank").innerHTML = top.map(function (v) {
+      var pct = Math.round(v.session * 100);
+      var w = Math.max(4, (v.session / max) * 100);
+      return '<div class="vrow' + (v.isCurrent ? ' current' : '') + '">' +
+        '<span class="vlabel">' + v.label + (v.isCurrent ? ' <i>you</i>' : '') + '</span>' +
+        '<span class="vbar"><span class="vfill" style="width:' + w + '%"></span></span>' +
+        '<span class="vval">' + pct + '%</span></div>';
+    }).join("");
+  }
+
+  function renderCoaching(r) {
+    var p = r.p;
+    var n50 = (p > 0 && p < 1) ? Math.max(1, Math.ceil(Math.log(0.5) / Math.log(1 - p))) : "—";
+    var dyn =
+      '<div class="coach dyn"><b>It\'s volume + skill, not luck</b>' +
+      '<span>At your ~' + fmtPct(p) + '% per approach, about <b>' + n50 +
+      ' solid approaches</b> gives you a coin-flip at your first number. Every “no” is just ' +
+      'data moving you toward a yes — not a verdict on you.</span></div>';
+    var tips = D.COACHING.map(function (c) {
+      return '<div class="coach"><b>' + c.t + '</b><span>' + c.b + '</span></div>';
+    }).join("");
+    document.getElementById("coaching").innerHTML = dyn + tips;
+  }
+
+  function renderOpeners() {
+    var cat = D.VENUES[state.venue].cat || "any";
+    var list = D.OPENERS[cat] || D.OPENERS.any;
+    var lowReceptivity = (cat === "fitness" || cat === "transit");
+    var rows = list.map(function (o) {
+      return '<div class="opener"><span class="op-style ' + o.s + '">' +
+        (o.s === "warm" ? "Warm" : "Direct") + '</span><span class="op-text">' + o.t + '</span></div>';
+    }).join("");
+    var note = lowReceptivity
+      ? '<p class="op-note">Read the room here — this is a low-receptivity spot, so only approach if she seems open and unhurried.</p>'
+      : '';
+    document.getElementById("openers").innerHTML = rows + note;
+  }
+
+  // ---- Theme ----
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "light" ? "#f6f7fb" : "#0a0b0f");
+    var btn = document.getElementById("themeToggle");
+    if (btn) btn.textContent = theme === "light" ? "☾" : "☀";
+    try { localStorage.setItem("tb_theme", theme); } catch (e) {}
+  }
+  function initTheme() {
+    var saved;
+    try { saved = localStorage.getItem("tb_theme"); } catch (e) {}
+    if (!saved) {
+      saved = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+    }
+    applyTheme(saved);
+  }
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute("data-theme");
+    applyTheme(cur === "light" ? "dark" : "light");
+    render();
   }
 
   function renderCalib(r) {
@@ -494,6 +615,7 @@
     });
 
     document.getElementById("locBtn").addEventListener("click", useLocation);
+    document.getElementById("themeToggle").addEventListener("click", toggleTheme);
 
     document.getElementById("shareBtn").addEventListener("click", function () {
       if (!SHARE || !lastResult) return;
@@ -529,6 +651,7 @@
 
   // -------------------- boot --------------------
   document.addEventListener("DOMContentLoaded", function () {
+    initTheme();
     if (SHARE) {
       var urlState = SHARE.readUrlState();
       if (urlState) Object.keys(urlState).forEach(function (k) { state[k] = urlState[k]; });
