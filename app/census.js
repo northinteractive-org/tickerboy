@@ -13,8 +13,11 @@
 
   var KEY_STORE = "tb_census_key";
   var ACS_YEAR = "2022";
+  // Shipped default (free, read-only, rate-limited to 500/day). A user can
+  // override it with their own via setKey(); rotate at api.census.gov if abused.
+  var DEFAULT_KEY = "6203719971b7eff69b1d4c086dd0afe41b5dd0dd";
 
-  function getKey() { try { return localStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; } }
+  function getKey() { try { return localStorage.getItem(KEY_STORE) || DEFAULT_KEY; } catch (e) { return DEFAULT_KEY; } }
   function setKey(k) { try { localStorage.setItem(KEY_STORE, (k || "").trim()); } catch (e) {} }
 
   function geolocate() {

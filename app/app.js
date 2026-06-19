@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v14";
+  var BUILD_VERSION = "v15";
 
   var state = {
     manAge: 30,
