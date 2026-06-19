@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1020" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <title>Cold Approach Odds</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -23,10 +26,8 @@
       <p class="gauge-caption" id="gaugeCaption">Answer the prompts — the odds update live.</p>
     </header>
 
-    <!-- Progress -->
     <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
 
-    <!-- Steps -->
     <section class="card">
 
       <div class="step" data-step="0">
@@ -66,30 +67,55 @@
         <h2>Where are you approaching?</h2>
         <p class="hint">Venues differ wildly in how welcome a cold approach is.</p>
         <select id="venue" class="select"></select>
+        <button id="locBtn" class="btn ghost wide" type="button">📍 Use my location for local data</button>
+        <p class="loc-status" id="locStatus"></p>
       </div>
 
       <div class="step" data-step="5" hidden>
+        <h2>When?</h2>
+        <p class="hint">Timing shifts how receptive a venue is.</p>
+        <label class="field-label">Time of day</label>
+        <div class="segmented" id="timeOfDay"></div>
+        <label class="field-label" style="margin-top:18px">Day</label>
+        <div class="segmented" id="dayType"></div>
+      </div>
+
+      <div class="step" data-step="6" hidden>
         <h2>How's your delivery?</h2>
         <p class="hint">The biggest lever you actually control. Be honest.</p>
         <div class="segmented" id="confidence"></div>
         <p class="conf-label" id="confLabel"></p>
       </div>
 
-      <div class="step" data-step="6" hidden>
+      <div class="step" data-step="7" hidden>
         <h2>Your odds</h2>
         <div class="breakdown" id="breakdown"></div>
         <div class="reality" id="reality"></div>
+
+        <button id="shareBtn" class="btn wide" type="button">Share my odds</button>
+
+        <div class="logbox">
+          <p class="log-title">Tried it? Log the outcome to calibrate your odds.</p>
+          <div class="log-actions">
+            <button id="logYes" class="btn small" type="button">✅ Got the number</button>
+            <button id="logNo" class="btn ghost small" type="button">❌ No number</button>
+          </div>
+          <p class="calib" id="calib"></p>
+        </div>
+
         <details class="method">
           <summary>How this is calculated</summary>
-          <p>Your per-approach chance is the product of independent factors:
+          <p>Per-approach chance is the product of independent factors:
              <em>single → open to dating → accepts your age → clears the height bar
-             → venue is receptive → your delivery.</em></p>
-          <p>Numbers are directional estimates drawn from public research
-             (U.S. Census/ACS marital status, Pew Research on singles, OkCupid
-             age-preference data, height-preference surveys). Venue and delivery
-             figures are estimates. This is entertainment and a nudge toward the
-             factors you control — not a guarantee. Approach respectfully and
-             read the room.</p>
+             → venue receptive (adjusted for timing) → your delivery</em>, then
+             nudged by your own logged outcomes.</p>
+          <p>Numbers are directional estimates from public research (U.S.
+             Census/ACS marital status, Pew Research on singles, OkCupid
+             age-preference data, height-preference surveys). With a free
+             <a href="https://api.census.gov/data/key_signup.html" target="_blank" rel="noopener">Census API key</a>
+             added, the "single" factor is refined with real local data for your
+             county. This is entertainment and a nudge toward what you control —
+             not a guarantee. Approach respectfully and read the room.</p>
         </details>
       </div>
 
@@ -101,6 +127,9 @@
   </main>
 
   <script src="data.js"></script>
+  <script src="census.js"></script>
+  <script src="store.js"></script>
+  <script src="share.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

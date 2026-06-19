@@ -62,20 +62,62 @@
   // footfall:   rough count of women you could realistically cross paths with
   //             in one outing (before age filtering).
   var VENUES = {
-    bar_nightclub:  { label: "Bar / nightclub",        receptivity: 0.45, footfall: 25 },
-    lounge_social:  { label: "Lounge / social event",  receptivity: 0.50, footfall: 20 },
-    festival:       { label: "Festival / concert",     receptivity: 0.40, footfall: 60 },
-    college_campus: { label: "College campus",         receptivity: 0.35, footfall: 50 },
-    coffee_shop:    { label: "Coffee shop",            receptivity: 0.30, footfall: 8  },
-    bookstore:      { label: "Bookstore / library",    receptivity: 0.26, footfall: 6  },
-    dog_park:       { label: "Dog park",               receptivity: 0.30, footfall: 5  },
-    beach:          { label: "Beach / pool",           receptivity: 0.28, footfall: 30 },
-    park:           { label: "Park",                   receptivity: 0.24, footfall: 12 },
-    street_day:     { label: "Street (daytime)",       receptivity: 0.18, footfall: 40 },
-    grocery:        { label: "Grocery / shops",        receptivity: 0.16, footfall: 15 },
-    gym:            { label: "Gym",                     receptivity: 0.12, footfall: 6  },
-    transit:        { label: "Public transit",         receptivity: 0.10, footfall: 20 }
+    bar_nightclub:  { label: "Bar / nightclub",        receptivity: 0.45, footfall: 25, cat: "nightlife" },
+    lounge_social:  { label: "Lounge / social event",  receptivity: 0.50, footfall: 20, cat: "social" },
+    festival:       { label: "Festival / concert",     receptivity: 0.40, footfall: 60, cat: "social" },
+    college_campus: { label: "College campus",         receptivity: 0.35, footfall: 50, cat: "campus" },
+    coffee_shop:    { label: "Coffee shop",            receptivity: 0.30, footfall: 8,  cat: "daytime" },
+    bookstore:      { label: "Bookstore / library",    receptivity: 0.26, footfall: 6,  cat: "daytime" },
+    dog_park:       { label: "Dog park",               receptivity: 0.30, footfall: 5,  cat: "outdoor" },
+    beach:          { label: "Beach / pool",           receptivity: 0.28, footfall: 30, cat: "outdoor" },
+    park:           { label: "Park",                   receptivity: 0.24, footfall: 12, cat: "outdoor" },
+    street_day:     { label: "Street (daytime)",       receptivity: 0.18, footfall: 40, cat: "errand" },
+    grocery:        { label: "Grocery / shops",        receptivity: 0.16, footfall: 15, cat: "errand" },
+    gym:            { label: "Gym",                     receptivity: 0.12, footfall: 6,  cat: "fitness" },
+    transit:        { label: "Public transit",         receptivity: 0.10, footfall: 20, cat: "transit" }
   };
+
+  // ---- Time-of-day & day-of-week receptivity multipliers ---------------
+  // How welcome a respectful approach is shifts with timing. Multipliers
+  // are relative to the venue's baseline receptivity (1.0 = neutral).
+  var TIMES = {
+    morning:   { label: "Morning" },
+    afternoon: { label: "Afternoon" },
+    evening:   { label: "Evening" },
+    late:      { label: "Late night" }
+  };
+  var DAYS = { weekday: { label: "Weekday" }, weekend: { label: "Weekend" } };
+
+  // multiplier by venue category × time of day
+  var TIMING = {
+    nightlife: { morning: 0.3, afternoon: 0.5, evening: 1.15, late: 1.35 },
+    social:    { morning: 0.6, afternoon: 0.9, evening: 1.2,  late: 1.1  },
+    campus:    { morning: 1.0, afternoon: 1.1, evening: 0.9,  late: 0.6  },
+    daytime:   { morning: 1.1, afternoon: 1.0, evening: 0.85, late: 0.5  },
+    outdoor:   { morning: 1.0, afternoon: 1.15, evening: 0.9, late: 0.4  },
+    errand:    { morning: 0.95, afternoon: 1.05, evening: 0.9, late: 0.5 },
+    fitness:   { morning: 1.0, afternoon: 0.95, evening: 1.05, late: 0.6 },
+    transit:   { morning: 1.0, afternoon: 1.0, evening: 1.0,  late: 0.7  }
+  };
+  // weekend lift/drag by category
+  var DAY_BOOST = {
+    nightlife: { weekday: 0.75, weekend: 1.15 },
+    social:    { weekday: 0.8,  weekend: 1.15 },
+    campus:    { weekday: 1.1,  weekend: 0.8  },
+    daytime:   { weekday: 0.95, weekend: 1.1  },
+    outdoor:   { weekday: 0.9,  weekend: 1.15 },
+    errand:    { weekday: 1.0,  weekend: 1.05 },
+    fitness:   { weekday: 1.0,  weekend: 0.95 },
+    transit:   { weekday: 1.05, weekend: 0.85 }
+  };
+
+  function timingMult(venueKey, timeKey, dayKey) {
+    var cat = (VENUES[venueKey] || {}).cat || "daytime";
+    var t = (TIMING[cat] || {})[timeKey];
+    var d = (DAY_BOOST[cat] || {})[dayKey];
+    if (t == null) t = 1; if (d == null) d = 1;
+    return Math.max(0.2, Math.min(1.6, t * d));
+  }
 
   // ---- Execution / delivery multiplier ---------------------------------
   // The lever most under your control: grooming, opener, calibration, exit.
@@ -122,9 +164,15 @@
     OPEN_BY_AGE: OPEN_BY_AGE,
     FEMALE_AGE_WEIGHT: FEMALE_AGE_WEIGHT,
     VENUES: VENUES,
+    TIMES: TIMES,
+    DAYS: DAYS,
+    timingMult: timingMult,
     CONFIDENCE: CONFIDENCE,
     RACES: RACES,
     pHeight: pHeight,
-    pAgeMatch: pAgeMatch
+    pAgeMatch: pAgeMatch,
+    // National baseline: female share (15+) not currently married, used to
+    // normalize a locality's Census marital-status data into a multiplier.
+    NATIONAL_FEMALE_SINGLE_SHARE: 0.48
   };
 })(typeof window !== "undefined" ? window : this);
