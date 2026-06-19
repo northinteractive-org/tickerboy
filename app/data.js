@@ -62,6 +62,7 @@
   // footfall:   rough count of women you could realistically cross paths with
   //             in one outing (before age filtering).
   var VENUES = {
+    all_average:    { label: "All / average (not sure)", receptivity: 0.25, footfall: 20, cat: "any" },
     bar_nightclub:  { label: "Bar / nightclub",        receptivity: 0.45, footfall: 25, cat: "nightlife" },
     lounge_social:  { label: "Lounge / social event",  receptivity: 0.50, footfall: 20, cat: "social" },
     festival:       { label: "Festival / concert",     receptivity: 0.40, footfall: 60, cat: "social" },
@@ -74,7 +75,9 @@
     street_day:     { label: "Street (daytime)",       receptivity: 0.18, footfall: 40, cat: "errand" },
     grocery:        { label: "Grocery / shops",        receptivity: 0.16, footfall: 15, cat: "errand" },
     gym:            { label: "Gym",                     receptivity: 0.12, footfall: 6,  cat: "fitness" },
-    transit:        { label: "Public transit",         receptivity: 0.10, footfall: 20, cat: "transit" }
+    transit:        { label: "Public transit",         receptivity: 0.10, footfall: 20, cat: "transit" },
+    airport:        { label: "Airport",                receptivity: 0.22, footfall: 30, cat: "travel" },
+    airplane:       { label: "Airplane",               receptivity: 0.30, footfall: 3,  cat: "travel" }
   };
 
   // ---- Time-of-day & day-of-week receptivity multipliers ---------------
@@ -97,7 +100,9 @@
     outdoor:   { morning: 1.0, afternoon: 1.15, evening: 0.9, late: 0.4  },
     errand:    { morning: 0.95, afternoon: 1.05, evening: 0.9, late: 0.5 },
     fitness:   { morning: 1.0, afternoon: 0.95, evening: 1.05, late: 0.6 },
-    transit:   { morning: 1.0, afternoon: 1.0, evening: 1.0,  late: 0.7  }
+    transit:   { morning: 1.0, afternoon: 1.0, evening: 1.0,  late: 0.7  },
+    travel:    { morning: 1.0, afternoon: 1.05, evening: 1.0, late: 0.8  },
+    any:       { morning: 1.0, afternoon: 1.0, evening: 1.0,  late: 1.0  }
   };
   // weekend lift/drag by category
   var DAY_BOOST = {
@@ -108,7 +113,9 @@
     outdoor:   { weekday: 0.9,  weekend: 1.15 },
     errand:    { weekday: 1.0,  weekend: 1.05 },
     fitness:   { weekday: 1.0,  weekend: 0.95 },
-    transit:   { weekday: 1.05, weekend: 0.85 }
+    transit:   { weekday: 1.05, weekend: 0.85 },
+    travel:    { weekday: 1.0,  weekend: 1.05 },
+    any:       { weekday: 1.0,  weekend: 1.0  }
   };
 
   function timingMult(venueKey, timeKey, dayKey) {
@@ -137,6 +144,24 @@
     "Middle Eastern", "Native American", "Pacific Islander",
     "South Asian", "White", "Mixed / other"
   ];
+
+  // Modest, population-level multipliers loosely reflecting aggregate
+  // dating-app reply-rate studies (e.g. OkCupid's race/attraction data).
+  // Controversial and about populations, NOT any individual. Kept in a
+  // tight band so it nudges rather than dominates. "Prefer not to say"
+  // is neutral. Easy to flatten to all 1.0 to disable.
+  var RACE_FACTORS = {
+    "Prefer not to say": 1.00,
+    "Asian":             0.94,
+    "Black":             0.97,
+    "Hispanic / Latino": 1.01,
+    "Middle Eastern":    0.98,
+    "Native American":   1.00,
+    "Pacific Islander":  1.00,
+    "South Asian":       0.95,
+    "White":             1.03,
+    "Mixed / other":     1.02
+  };
 
   // ---- Model functions -------------------------------------------------
 
@@ -169,6 +194,7 @@
     timingMult: timingMult,
     CONFIDENCE: CONFIDENCE,
     RACES: RACES,
+    RACE_FACTORS: RACE_FACTORS,
     pHeight: pHeight,
     pAgeMatch: pAgeMatch,
     // National baseline: female share (15+) not currently married, used to
