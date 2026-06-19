@@ -28,10 +28,25 @@
         </ul>
         <button id="startBtn" class="btn wide welcome-cta" type="button">Find my odds</button>
         <p class="welcome-women">Reading this as a woman? It's built to make the men around you warmer and more respectful, not less. We'd love your take on what a genuinely good approach feels like.</p>
+        <button id="welcomeContribute" class="welcome-link" type="button">Share what a good approach feels like →</button>
       </div>
     </section>
 
+    <button id="accountBtn" class="account-btn" type="button">Sign in</button>
     <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light / dark mode">☀</button>
+
+    <section id="contribute" class="welcome" hidden>
+      <div class="welcome-inner">
+        <span class="welcome-eyebrow">Help shape this</span>
+        <h1 class="welcome-h1">What makes an approach feel good?</h1>
+        <p class="welcome-sub">You know the difference between a warm hello and a creepy one better than any dataset. Tell us what lands, what doesn't, and what you wish men understood. Real answers shape the coaching other people see.</p>
+        <textarea id="contribBody" class="contrib-input" rows="5" placeholder="A good approach feels like…"></textarea>
+        <input id="contribVenue" class="select contrib-venue" type="text" placeholder="Where? (optional, e.g. coffee shop)" />
+        <button id="contribSubmit" class="btn wide" type="button">Send it in</button>
+        <p class="contrib-status" id="contribStatus"></p>
+        <button id="contribClose" class="btn ghost wide" type="button">Back</button>
+      </div>
+    </section>
 
     <div class="brand">
       <span class="brand-name">COLD APPROACH</span>
@@ -230,5 +245,6 @@
   <script src="store.js"></script>
   <script src="share.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="supa.js"></script>
 </body>
 </html>
