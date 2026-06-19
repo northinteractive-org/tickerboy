@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v6";
+  var BUILD_VERSION = "v7";
 
   var state = {
     manAge: 30,
@@ -179,6 +179,10 @@
   var prevP = null;
   var deltaTimer = null;
 
+  // Semantic colors (kept in sync with the gauge/curve palette).
+  var C_BAD = "#fb7185", C_MID = "#fbbf24", C_GOOD = "#34d399";
+  function tierColor(p) { return p < 0.05 ? C_BAD : p < 0.15 ? C_MID : C_GOOD; }
+
   // Adaptive precision: more decimals as the odds get small, so slider
   // nudges stay visible even down around a couple of percent.
   function fmtPct(p) {
@@ -196,7 +200,7 @@
     if (Math.abs(dPts) < 0.005) { el.style.opacity = 0; return; }
     var up = dPts > 0;
     el.textContent = (up ? "▲ +" : "▼ ") + dPts.toFixed(2) + " pts";
-    el.style.color = up ? "#34d399" : "#ef4444";
+    el.style.color = up ? C_GOOD : C_BAD;
     el.style.opacity = 1;
     if (deltaTimer) clearTimeout(deltaTimer);
     deltaTimer = setTimeout(function () { el.style.opacity = 0; }, 1400);
@@ -234,8 +238,7 @@
 
     var bx0 = cx(Math.min(s.targetMin, s.targetMax));
     var bx1 = cx(Math.max(s.targetMin, s.targetMax));
-    var color = lastResult && lastResult.p < 0.05 ? "#ef4444"
-              : lastResult && lastResult.p < 0.15 ? "#f59e0b" : "#34d399";
+    var color = tierColor(lastResult ? lastResult.p : 0.1);
 
     svg.innerHTML =
       '<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">' +
@@ -260,7 +263,7 @@
     var fill = document.getElementById("gaugeFill");
     fill.style.strokeDasharray = GAUGE_CIRC;
     fill.style.strokeDashoffset = GAUGE_CIRC * (1 - r.p);
-    fill.style.stroke = r.p < 0.05 ? "#ef4444" : r.p < 0.15 ? "#f59e0b" : "#34d399";
+    fill.style.stroke = tierColor(r.p);
     document.getElementById("gaugePct").textContent = fmtPct(r.p) + "%";
     document.getElementById("gaugeCaption").textContent = caption(r);
     showDelta(r.p);

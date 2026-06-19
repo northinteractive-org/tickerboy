@@ -1,9 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0b1020"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="#26304d" stroke-width="40"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="#34d399" stroke-width="40"
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6e6bff"/>
+      <stop offset="100%" stop-color="#9a7bff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0a0b0f"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="38"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#g)" stroke-width="38"
           stroke-linecap="round" stroke-dasharray="942" stroke-dashoffset="660"
           transform="rotate(-90 256 256)"/>
-  <text x="256" y="290" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif"
-        font-size="120" font-weight="800" fill="#e8edf7">%</text>
+  <text x="256" y="292" text-anchor="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="124" font-weight="800" fill="#f4f5f8">%</text>
 </svg>
