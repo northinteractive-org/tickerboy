@@ -199,54 +199,57 @@
   // ---- Openers (mix of warm/situational and bold/direct, by context) --
   var OPENERS = {
     nightlife: [
-      { s: "warm", t: "This song is either great or terrible and I can't decide — what's your verdict?" },
-      { s: "direct", t: "I saw you from across the room and I'd regret it if I didn't come say hi. I'm ___." }
+      { s: "warm", t: "This song is either great or terrible and I can't decide. What's your verdict?" },
+      { s: "direct", t: "I saw you from across the room and had to come say hi. I'm ___." }
     ],
     social: [
       { s: "warm", t: "How do you know people here?" },
-      { s: "direct", t: "I don't know anyone here yet and you seemed like the best person to fix that. I'm ___." }
+      { s: "direct", t: "I don't know anyone here yet, and you looked like the best person to fix that. I'm ___." }
     ],
     campus: [
-      { s: "warm", t: "This'll sound like a line, but do you actually know where ___ is? …also, I'm ___." },
-      { s: "direct", t: "I'm supposed to be studying but I'd much rather introduce myself. I'm ___." }
+      { s: "warm", t: "This is going to sound like a line, but do you actually know where ___ is? I'm ___, by the way." },
+      { s: "direct", t: "I should be studying, but I'd rather meet you. I'm ___." }
     ],
     daytime: [
-      { s: "warm", t: "Sorry to interrupt — what are you drinking? I need a new go-to and I trust a stranger's taste." },
-      { s: "direct", t: "I'm making myself be brave for once: I noticed you and wanted to say hi. I'm ___." }
+      { s: "warm", t: "Quick question. What are you drinking? I need a new go-to and I trust a stranger's taste." },
+      { s: "direct", t: "I'm making myself be brave today. I saw you and wanted to say hi. I'm ___." }
     ],
     outdoor: [
-      { s: "warm", t: "Okay, your dog is objectively cooler than mine. What's their name?" },
-      { s: "direct", t: "I'll keep this quick so you can get back to your day — I just wanted to come meet you. I'm ___." }
+      { s: "warm", t: "Okay, your dog is cooler than mine. What's their name?" },
+      { s: "direct", t: "I'll keep this short so you can get back to your day. I just wanted to meet you. I'm ___." }
     ],
     errand: [
-      { s: "warm", t: "Important question: which of these do I actually buy? You look like you'd know." },
+      { s: "warm", t: "Important question. Which of these do I actually buy? You look like you'd know." },
       { s: "direct", t: "This is random, but I saw you and didn't want to walk past without saying hi. I'm ___." }
     ],
     fitness: [
-      { s: "warm", t: "Quick one between sets — are you almost done with this? …and I'm ___, by the way." },
+      { s: "warm", t: "Quick one between sets. Are you almost done with this? I'm ___, by the way." },
       { s: "direct", t: "I'll let you get back to it, but I had to introduce myself first. I'm ___." }
     ],
     transit: [
-      { s: "warm", t: "I've got about two stops of courage in me, so — hi, I'm ___." },
-      { s: "direct", t: "I only have a minute before my stop, so I'll just say it: I wanted to meet you. I'm ___." }
+      { s: "warm", t: "I've got about two stops of courage in me, so, hi. I'm ___." },
+      { s: "direct", t: "I only have a minute before my stop, so I'll just say it. I wanted to meet you. I'm ___." }
     ],
     travel: [
       { s: "warm", t: "Where are you headed? I'm collecting strangers' travel plans to feel better about mine." },
-      { s: "direct", t: "We've got time to kill anyway — I'm ___, figured I'd say hi properly." }
+      { s: "direct", t: "We've got time to kill anyway. I'm ___. Figured I'd say hi properly." }
     ],
     any: [
       { s: "warm", t: "This is a little out of the blue, but I saw you and wanted to introduce myself. I'm ___." },
-      { s: "direct", t: "I'm just going to be honest — I think you're cute and I wanted to come meet you. I'm ___." }
+      { s: "direct", t: "I'll be honest. I think you're cute and I wanted to meet you. I'm ___." }
     ]
   };
 
-  // ---- Evidence-informed coaching principles (static) ------------------
+  // ---- Coaching: charisma and mindset, not lines and tricks -----------
   var COACHING = [
-    { t: "Approach in the first few seconds", b: "The longer you wait, the bigger it feels and the more she notices you hovering. Decide, then move within ~3 seconds — hesitation is what kills approaches, not the line." },
-    { t: "Warmth beats the perfect line", b: "Research on first impressions consistently finds tone of voice and body language outweigh the actual words. A relaxed smile, open posture, and steady (not staring) eye contact carry the moment." },
-    { t: "Make it situational", b: "Comment on something real in the shared environment. It's lower-pressure than a rehearsed line, reads as genuine, and gives her an easy, natural way to respond." },
-    { t: "Respect the no — gracefully", b: "A warm exit ('No worries — have a great day') protects her comfort and your composure. Calibrated, respectful men get far better reactions and never look desperate." },
-    { t: "Anchor, don't linger", b: "Within a minute or two, either get a number or exit on a high note. Long, aimless conversations cool off; a confident 'I'd love to keep talking — what's your number?' converts interest before it fades." }
+    { c: "Mindset", t: "Your worth isn't on the line", b: "A stranger can't measure you in three seconds. Most no's are timing, not you. She's busy, distracted, or taken. Take it light and go again." },
+    { c: "Mindset", t: "Play the long game", b: "This is a skill, like the gym. Your first approaches will be clumsy. Do them anyway. Reps are the price, and the price is cheap." },
+    { c: "Mindset", t: "Want nothing, offer something", b: "Neediness shows instantly. Decide before you walk over that her answer won't change your night. That calm is the attractive part." },
+    { c: "Approach", t: "Move in three seconds", b: "See her, decide, go. Waiting only grows the fear. The fastest approach is the easiest one." },
+    { c: "Approach", t: "Lead with energy, not a line", b: "Warm smile, open shoulders, easy voice. She remembers how you made her feel, not how clever you were." },
+    { c: "Talk", t: "Talk about right now", b: "Comment on what's around you both. The drink, the line, the song, her dog. It's real, it's easy, and it gives her something to grab." },
+    { c: "Talk", t: "Ask, then actually listen", b: "Open questions beat statements. Then listen like you mean it. Real attention is rare, and it's magnetic." },
+    { c: "Talk", t: "Close before it cools", b: "Two good minutes beat twenty aimless ones. Say it warm. 'I like you. Let's grab a coffee. What's your number?'" }
   ];
 
   // ---- Model functions -------------------------------------------------
