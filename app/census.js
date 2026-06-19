@@ -44,24 +44,61 @@
     });
   }
 
-  // Returns { factor, share } where factor multiplies the national single curve.
-  function localSingleFactor(stateFips, countyFips, baseline) {
-    var key = getKey();
-    if (!key) return Promise.reject(new Error("no-key"));
-    // B12001 female: _011 total, _012 never married, _018 widowed, _019 divorced
-    var vars = "B12001_011E,B12001_012E,B12001_018E,B12001_019E";
-    var url = "https://api.census.gov/data/" + ACS_YEAR + "/acs/acs5?get=" + vars +
-      "&for=county:" + countyFips + "&in=state:" + stateFips + "&key=" + encodeURIComponent(key);
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error("Census HTTP " + r.status);
-      return r.json();
-    }).then(function (rows) {
-      var v = rows[1];
-      var total = +v[0], never = +v[1], widowed = +v[2], divorced = +v[3];
-      if (!total) throw new Error("Empty Census data");
-      var share = (never + widowed + divorced) / total;
-      var factor = Math.max(0.6, Math.min(1.5, share / baseline));
-      return { factor: factor, share: share };
+  // ---- Caching ---------------------------------------------------------
+  // Two layers: per-device localStorage (instant repeat) and a shared
+  // Supabase cache (one Census lookup per county serves everyone).
+  var CACHE_STORE = "tb_census_cache";
+  var CACHE_TTL = 30 * 24 * 3600 * 1000; // 30 days
+
+  function localCache() { try { return JSON.parse(localStorage.getItem(CACHE_STORE)) || {}; } catch (e) { return {}; } }
+  function saveLocalCache(c) { try { localStorage.setItem(CACHE_STORE, JSON.stringify(c)); } catch (e) {} }
+  function factorOut(share, baseline, source) {
+    return { factor: Math.max(0.6, Math.min(1.5, share / baseline)), share: share, source: source };
+  }
+
+  // Returns { factor, share, source } where factor multiplies the single curve.
+  function localSingleFactor(stateFips, countyFips, baseline, name) {
+    var fips = String(stateFips) + String(countyFips);
+
+    // 1. Per-device cache
+    var lc = localCache();
+    if (lc[fips] && (Date.now() - lc[fips].t) < CACHE_TTL) {
+      return Promise.resolve(factorOut(lc[fips].share, baseline, "device-cache"));
+    }
+
+    // 2. Shared Supabase cache
+    var supa = (typeof window !== "undefined") ? window.TB_SUPA : null;
+    var sharedRead = (supa && supa.getCensusCache)
+      ? supa.getCensusCache(fips).then(function (res) {
+          return (res && res.data && res.data.single_share != null) ? Number(res.data.single_share) : null;
+        }).catch(function () { return null; })
+      : Promise.resolve(null);
+
+    return sharedRead.then(function (cachedShare) {
+      if (cachedShare != null) {
+        lc[fips] = { share: cachedShare, t: Date.now() }; saveLocalCache(lc);
+        return factorOut(cachedShare, baseline, "shared-cache");
+      }
+
+      // 3. Live Census lookup, then write through both caches
+      var key = getKey();
+      if (!key) return Promise.reject(new Error("no-key"));
+      // B12001 female: _011 total, _012 never married, _018 widowed, _019 divorced
+      var vars = "B12001_011E,B12001_012E,B12001_018E,B12001_019E";
+      var url = "https://api.census.gov/data/" + ACS_YEAR + "/acs/acs5?get=" + vars +
+        "&for=county:" + countyFips + "&in=state:" + stateFips + "&key=" + encodeURIComponent(key);
+      return fetch(url).then(function (r) {
+        if (!r.ok) throw new Error("Census HTTP " + r.status);
+        return r.json();
+      }).then(function (rows) {
+        var v = rows[1];
+        var total = +v[0], never = +v[1], widowed = +v[2], divorced = +v[3];
+        if (!total) throw new Error("Empty Census data");
+        var share = (never + widowed + divorced) / total;
+        lc[fips] = { share: share, t: Date.now() }; saveLocalCache(lc);
+        if (supa && supa.setCensusCache) { try { supa.setCensusCache(fips, name, share); } catch (e) {} }
+        return factorOut(share, baseline, "census");
+      });
     });
   }
 

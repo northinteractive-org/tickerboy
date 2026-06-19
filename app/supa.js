@@ -48,6 +48,14 @@ window.TB_SUPA = {
 
   submitContribution: function (c) { return client.from("contributions").insert(c); },
 
+  // Shared Census cache (public read; writes go through the cache_census rpc).
+  getCensusCache: function (fips) {
+    return client.from("census_cache").select("single_share").eq("county_fips", fips).maybeSingle();
+  },
+  setCensusCache: function (fips, name, share) {
+    return client.rpc("cache_census", { p_fips: fips, p_name: name || null, p_share: share });
+  },
+
   savePreferences: function (p) {
     return client.auth.getUser().then(function (r) {
       var u = r.data && r.data.user;
