@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v10";
+  var BUILD_VERSION = "v11";
 
   var state = {
     manAge: 30,
@@ -212,9 +212,12 @@
     return v || fallback;
   }
   function tierColor(p) {
-    return p < 0.05 ? cssVar("--bad", "#fb7185")
-         : p < 0.15 ? cssVar("--mid", "#fbbf24")
-         : cssVar("--good", "#34d399");
+    return p < 0.05 ? cssVar("--bad", "#9a8a76")
+         : p < 0.15 ? cssVar("--mid", "#e6a13c")
+         : cssVar("--good", "#ff5a2d");
+  }
+  function tierWord(p) {
+    return p < 0.05 ? "Long shot" : p < 0.15 ? "In the game" : p < 0.30 ? "Strong" : "On fire";
   }
 
   // Adaptive precision: more decimals as the odds get small, so slider
@@ -299,6 +302,9 @@
     fill.style.strokeDashoffset = GAUGE_CIRC * (1 - r.p);
     fill.style.stroke = tierColor(r.p);
     document.getElementById("gaugePct").textContent = fmtPct(r.p) + "%";
+    var tier = document.getElementById("gaugeTier");
+    tier.textContent = tierWord(r.p);
+    tier.style.color = tierColor(r.p);
     document.getElementById("gaugeCaption").textContent = caption(r);
     showDelta(r.p);
     renderChart(state);
@@ -541,6 +547,13 @@
     var steps = document.querySelectorAll(".step");
     for (var k = 0; k < steps.length; k++) steps[k].hidden = (k !== step);
     document.getElementById("progressBar").style.width = ((step + 1) / TOTAL_STEPS * 100) + "%";
+    var sc = document.getElementById("stepCount");
+    if (sc) {
+      var inputSteps = TOTAL_STEPS - 1;
+      sc.textContent = step < inputSteps
+        ? ("0" + (step + 1)).slice(-2) + " / " + ("0" + inputSteps).slice(-2)
+        : "Your results";
+    }
     document.getElementById("backBtn").disabled = (step === 0);
     document.getElementById("nextBtn").textContent = (step === TOTAL_STEPS - 1) ? "Start over" : "Next";
     render();

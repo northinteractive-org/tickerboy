@@ -56,15 +56,15 @@
       var x = c.getContext("2d");
 
       var g = x.createLinearGradient(0, 0, W, W);
-      g.addColorStop(0, "#0a0b0f"); g.addColorStop(1, "#1b1830");
+      g.addColorStop(0, "#14100b"); g.addColorStop(1, "#2a1d10");
       x.fillStyle = g; x.fillRect(0, 0, W, W);
 
-      var color = opts.p < 0.05 ? "#fb7185" : opts.p < 0.15 ? "#fbbf24" : "#34d399";
+      var color = opts.p < 0.05 ? "#9a8a76" : opts.p < 0.15 ? "#e6a13c" : "#ff5a2d";
 
       // Ring
       var cx = W / 2, cy = 430, rad = 250;
       x.lineWidth = 46; x.lineCap = "round";
-      x.strokeStyle = "rgba(255,255,255,0.12)";
+      x.strokeStyle = "rgba(255,238,214,0.14)";
       x.beginPath(); x.arc(cx, cy, rad, 0, Math.PI * 2); x.stroke();
       x.strokeStyle = color;
       x.beginPath();
