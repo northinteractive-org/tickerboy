@@ -17,7 +17,8 @@ Current build: **v14**
 ## 🟠 Before any real launch
 
 - [ ] **Add custom SMTP in Supabase** (Auth → Emails). The default sender is rate-limited to a few emails/hour and often lands in spam. Needed before real users.
-- [ ] **Activate the Census API key** (optional local-data feature). The key you pasted earlier came back "not activated" — check jon@northinteractive.co for the activation email from the U.S. Census Bureau and click the link. Without it the app uses national averages (fine).
+- [x] ~~Activate the Census API key~~ — done and verified working (returns live ACS data).
+- [ ] **Decide how the Census key is used** (see question below): per-user prompt (current) vs. baked into the app for zero-friction local data.
 - [ ] **Decide on a name + custom domain** (optional). Currently "Cold Approach" on a github.io URL.
 
 ## 🟡 Decisions I need from you
