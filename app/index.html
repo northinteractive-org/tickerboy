@@ -29,6 +29,16 @@
 
     <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
 
+    <section class="chart-panel">
+      <div class="chart-head">
+        <span>Odds by her age</span>
+        <span id="chartPeak" class="chart-peak"></span>
+      </div>
+      <svg id="curveSvg" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="chart-axis"><span>18</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
+      <p class="chart-note">Shaded band = the ages you're targeting. The dot marks your best odds.</p>
+    </section>
+
     <section class="card">
 
       <div class="step" data-step="0">
@@ -125,6 +135,18 @@
         <button id="nextBtn" class="btn" type="button">Next</button>
       </nav>
     </section>
+
+    <footer class="refs">
+      <h3>Data &amp; references</h3>
+      <ul>
+        <li><a href="https://www.census.gov/programs-surveys/acs" target="_blank" rel="noopener">U.S. Census Bureau — American Community Survey (ACS)</a>: marital status by age and sex; local county data via the <a href="https://www.census.gov/data/developers/data-sets/acs-5year.html" target="_blank" rel="noopener">ACS 5-year API</a>.</li>
+        <li><a href="https://www.pewresearch.org/short-reads/2020/08/20/a-profile-of-single-americans/" target="_blank" rel="noopener">Pew Research Center</a>: share of single adults open to dating or a relationship.</li>
+        <li>Christian Rudder, <a href="https://www.gwern.net/docs/psychology/okcupid/index.html" target="_blank" rel="noopener"><em>Dataclysm</em> / OkCupid data</a>: age-preference patterns in dating.</li>
+        <li>Height-preference research, e.g. <a href="https://link.springer.com/article/10.1007/s10508-013-0227-5" target="_blank" rel="noopener">Stulp et al. (2013)</a>: women's partner-height preferences.</li>
+        <li><a href="https://geo.fcc.gov/api/census/" target="_blank" rel="noopener">FCC Area API</a>: latitude/longitude → county (keyless reverse geocoding).</li>
+      </ul>
+      <p class="refs-note">Venue receptivity, foot-traffic, timing, and delivery figures are the author's estimates, not measured rates. Curves are fit by judgment, not regression. This tool is for entertainment and self-reflection — approach people respectfully and read the room.</p>
+    </footer>
   </main>
 
   <script src="data.js"></script>
