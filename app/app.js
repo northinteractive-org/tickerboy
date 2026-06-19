@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v16";
+  var BUILD_VERSION = "v17";
 
   var state = {
     manAge: 30,
@@ -33,8 +33,12 @@
   var localSingleFactor = 1.0;
   var localName = "";
 
-  // Auth + cloud calibration (null = signed out, use localStorage).
+  // Auth + cloud calibration. Every device has a persistent anonymous
+  // identity (currentUser), so data is always saved server-side and
+  // de-duplicated. isMember = upgraded to a real email account, which is
+  // what the account UI and cross-device messaging key off.
   var currentUser = null;
+  var isMember = false;
   var cloudStats = null;
 
   var TOTAL_STEPS = 9;
@@ -565,7 +569,7 @@
   // ---- Accounts (Supabase) ----
   function updateAccountUI() {
     var btn = document.getElementById("accountBtn");
-    if (btn) btn.textContent = currentUser ? "Account" : "Sign in";
+    if (btn) btn.textContent = isMember ? "Account" : "Sign in";
   }
   function promptSignIn() {
     if (!window.TB_SUPA) { alert("Accounts are still loading. Try again in a moment."); return; }
@@ -577,7 +581,7 @@
     });
   }
   function handleAccount() {
-    if (currentUser) { if (confirm("Sign out?")) window.TB_SUPA.signOut(); }
+    if (isMember) { if (confirm("Sign out?")) window.TB_SUPA.signOut(); }
     else promptSignIn();
   }
   // ---- Female track ----
@@ -634,11 +638,6 @@
 
   function submitFemale() {
     var status = document.getElementById("fStatus");
-    if (!currentUser) {
-      status.textContent = "Sign in first (just an email) so your answers are saved and private.";
-      promptSignIn();
-      return;
-    }
     var green = document.getElementById("fGreen").value.trim();
     var turn = document.getElementById("fTurnoffs").value.trim();
     status.textContent = "Saving…";
@@ -655,13 +654,16 @@
       turnoffs: turn || null
     }).then(function (res) {
       if (res && res.error) { status.textContent = "Couldn't save: " + res.error.message; return; }
-      status.textContent = "Thank you. You just made this more honest for every guy who uses it.";
+      status.textContent = isMember
+        ? "Thank you. You just made this more honest for every guy who uses it."
+        : "Thank you. Saved on this device — add an email anytime to keep it across devices.";
     });
   }
   function initSupa() {
     function go() {
       window.TB_SUPA.onAuth(function (user) {
         currentUser = user;
+        isMember = !!(user && !user.is_anonymous);
         updateAccountUI();
         if (user) refreshCloudStats(); else { cloudStats = null; render(); }
       });
@@ -674,16 +676,16 @@
     var st = calibStats();
     var el = document.getElementById("calib");
     if (!st || st.n === 0) {
-      el.textContent = currentUser
+      el.textContent = isMember
         ? "Log your real approaches and these numbers start learning you. Saved to your account."
-        : "Log your real approaches and these numbers start learning you. Sign in to save them across devices.";
+        : "Log your real approaches and these numbers start learning you. Add an email to keep them across devices.";
       return;
     }
     var dir = r.personal >= 1 ? "up " + Math.round((r.personal - 1) * 100) + "%"
                               : "down " + Math.round((1 - r.personal) * 100) + "%";
     el.textContent = "Tuned to your " + st.n + " logged approach" + (st.n === 1 ? "" : "es") +
       " (" + st.successes + " number" + (st.successes === 1 ? "" : "s") + "). Your odds adjusted " + dir + "." +
-      (currentUser ? " Synced to your account." : " Sign in to save these.");
+      (isMember ? " Synced to your account." : " Add an email to keep these across devices.");
   }
 
   function showStep(i) {
