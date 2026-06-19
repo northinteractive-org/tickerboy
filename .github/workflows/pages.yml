@@ -3,7 +3,6 @@ name: Deploy app to GitHub Pages
 on:
   push:
     branches:
-      - claude/cold-approach-probability-tool-myxuc3
       - main
     paths:
       - "app/**"
@@ -17,7 +16,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
