@@ -91,18 +91,43 @@
   // -------------------- rendering --------------------
   var GAUGE_CIRC = 2 * Math.PI * 52;
   var lastResult = null;
+  var prevP = null;
+  var deltaTimer = null;
+
+  // Adaptive precision: more decimals as the odds get small, so slider
+  // nudges stay visible even down around a couple of percent.
+  function fmtPct(p) {
+    var v = p * 100;
+    if (v >= 10) return v.toFixed(0);
+    if (v >= 1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  function showDelta(p) {
+    var el = document.getElementById("gaugeDelta");
+    if (prevP == null) { prevP = p; el.style.opacity = 0; return; }
+    var dPts = (p - prevP) * 100;
+    prevP = p;
+    if (Math.abs(dPts) < 0.005) { el.style.opacity = 0; return; }
+    var up = dPts > 0;
+    el.textContent = (up ? "▲ +" : "▼ ") + dPts.toFixed(2) + " pts";
+    el.style.color = up ? "#34d399" : "#ef4444";
+    el.style.opacity = 1;
+    if (deltaTimer) clearTimeout(deltaTimer);
+    deltaTimer = setTimeout(function () { el.style.opacity = 0; }, 1400);
+  }
 
   function render() {
     var r = compute(state);
     lastResult = r;
-    var pct = Math.round(r.p * 100);
 
     var fill = document.getElementById("gaugeFill");
     fill.style.strokeDasharray = GAUGE_CIRC;
     fill.style.strokeDashoffset = GAUGE_CIRC * (1 - r.p);
     fill.style.stroke = r.p < 0.05 ? "#ef4444" : r.p < 0.15 ? "#f59e0b" : "#34d399";
-    document.getElementById("gaugePct").textContent = pct + "%";
+    document.getElementById("gaugePct").textContent = fmtPct(r.p) + "%";
     document.getElementById("gaugeCaption").textContent = caption(r);
+    showDelta(r.p);
 
     if (SHARE) SHARE.updateUrl(state);
     if (step === 7) renderResults(r);
