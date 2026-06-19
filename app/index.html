@@ -13,6 +13,8 @@
 <body>
   <main class="app">
 
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light / dark mode">☀</button>
+
     <!-- Live, always-updating estimate -->
     <header class="gauge-wrap" aria-live="polite">
       <svg class="gauge" viewBox="0 0 120 120" role="img" aria-label="Success probability">
@@ -121,11 +123,24 @@
 
         <div class="attraction" id="attraction"></div>
 
+        <h3 class="sect">Your ceiling — the best you can do</h3>
+        <div class="ceiling" id="ceiling"></div>
+
+        <h3 class="sect">Best places to approach</h3>
+        <p class="sect-note">Each spot at its best time, as you are now.</p>
+        <div class="venue-rank" id="venueRank"></div>
+
         <h3 class="sect">What's helping &amp; hurting</h3>
         <div class="breakdown" id="breakdown"></div>
 
         <h3 class="sect">Do this to improve your odds</h3>
         <div class="actions" id="actions"></div>
+
+        <h3 class="sect">Coaching</h3>
+        <div class="coaching" id="coaching"></div>
+
+        <h3 class="sect">Openers that work here</h3>
+        <div class="openers" id="openers"></div>
 
         <div class="reality" id="reality"></div>
 
