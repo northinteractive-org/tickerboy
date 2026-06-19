@@ -1,6 +1,6 @@
 /* sw.js — offline app shell with a network-first strategy so updates
  * always land when the user is online, and the app still works offline. */
-var CACHE = "cold-approach-odds-v12";
+var CACHE = "cold-approach-odds-v13";
 var ASSETS = [
   "./", "./index.html", "./styles.css",
   "./data.js", "./census.js", "./store.js", "./share.js", "./app.js", "./supa.js",

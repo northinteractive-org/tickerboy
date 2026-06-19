@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v15";
+  var BUILD_VERSION = "v16";
 
   var state = {
     manAge: 30,
@@ -746,7 +746,7 @@
       .then(function (loc) {
         localName = loc.name;
         status.textContent = "📍 " + loc.name + ". Fetching local data…";
-        return C.localSingleFactor(loc.stateFips, loc.countyFips, D.NATIONAL_FEMALE_SINGLE_SHARE)
+        return C.localSingleFactor(loc.stateFips, loc.countyFips, D.NATIONAL_FEMALE_SINGLE_SHARE, loc.name)
           .then(function (res) {
             localSingleFactor = res.factor;
             var pct = Math.round(res.share * 100);
