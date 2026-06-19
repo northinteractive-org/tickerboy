@@ -11,7 +11,7 @@
   var STORE = window.TB_STORE;
   var SHARE = window.TB_SHARE;
 
-  var BUILD_VERSION = "v12";
+  var BUILD_VERSION = "v13";
 
   var state = {
     manAge: 30,
@@ -32,6 +32,10 @@
   // Local-demographics refinement (1.0 = national baseline).
   var localSingleFactor = 1.0;
   var localName = "";
+
+  // Auth + cloud calibration (null = signed out, use localStorage).
+  var currentUser = null;
+  var cloudStats = null;
 
   var TOTAL_STEPS = 9;
   var step = 0;
@@ -58,6 +62,18 @@
     return s;
   })();
 
+  // Personal calibration: cloud attempts when signed in, else localStorage.
+  function factorFromStats(s) {
+    if (!s || s.n === 0) return 1;
+    return clamp((s.successes + 3) / (s.sumPred + 3), 0.3, 3);
+  }
+  function personalFactor() {
+    return (currentUser && cloudStats) ? factorFromStats(cloudStats) : STORE.factor();
+  }
+  function calibStats() {
+    return (currentUser && cloudStats) ? cloudStats : STORE.stats();
+  }
+
   function sharedFactors(s) {
     var venue = D.VENUES[s.venue];
     return {
@@ -66,7 +82,7 @@
       race: D.RACE_FACTORS[s.race] || 1,
       location: clamp(venue.receptivity * D.timingMult(s.venue, s.timeOfDay, s.dayType), 0, 0.9),
       delivery: D.CONFIDENCE[s.confidence].mult,
-      personal: STORE.factor()
+      personal: personalFactor()
     };
   }
 
@@ -546,17 +562,71 @@
     render();
   }
 
+  // ---- Accounts (Supabase) ----
+  function updateAccountUI() {
+    var btn = document.getElementById("accountBtn");
+    if (btn) btn.textContent = currentUser ? "Account" : "Sign in";
+  }
+  function promptSignIn() {
+    if (!window.TB_SUPA) { alert("Accounts are still loading. Try again in a moment."); return; }
+    var email = prompt("Enter your email and we'll send a one-tap sign-in link:");
+    if (!email) return;
+    window.TB_SUPA.signIn(email.trim()).then(function (res) {
+      alert(res.error ? ("Couldn't send the link: " + res.error.message)
+                      : "Check your email for a sign-in link.");
+    });
+  }
+  function handleAccount() {
+    if (currentUser) { if (confirm("Sign out?")) window.TB_SUPA.signOut(); }
+    else promptSignIn();
+  }
+  function openContribute() { var c = document.getElementById("contribute"); if (c) { c.hidden = false; c.scrollTop = 0; } }
+  function closeContribute() { var c = document.getElementById("contribute"); if (c) c.hidden = true; }
+  function submitContribution() {
+    var status = document.getElementById("contribStatus");
+    var body = document.getElementById("contribBody").value.trim();
+    if (!body) { status.textContent = "Write a sentence or two first."; return; }
+    if (!currentUser) {
+      status.textContent = "Sign in first (just an email) so we can protect and credit your words.";
+      promptSignIn();
+      return;
+    }
+    var venue = document.getElementById("contribVenue").value.trim();
+    status.textContent = "Sending…";
+    window.TB_SUPA.submitContribution({ kind: "green_flag", body: body, venue: venue || null })
+      .then(function (res) {
+        if (res.error) { status.textContent = "Couldn't send: " + res.error.message; return; }
+        status.textContent = "Thank you. This genuinely helps.";
+        document.getElementById("contribBody").value = "";
+        document.getElementById("contribVenue").value = "";
+      });
+  }
+  function initSupa() {
+    function go() {
+      window.TB_SUPA.onAuth(function (user) {
+        currentUser = user;
+        updateAccountUI();
+        if (user) refreshCloudStats(); else { cloudStats = null; render(); }
+      });
+    }
+    if (window.TB_SUPA) go();
+    else document.addEventListener("tb:supa", go, { once: true });
+  }
+
   function renderCalib(r) {
-    var st = STORE.stats();
+    var st = calibStats();
     var el = document.getElementById("calib");
-    if (st.n === 0) {
-      el.textContent = "Log your real approaches and these numbers start learning you.";
+    if (!st || st.n === 0) {
+      el.textContent = currentUser
+        ? "Log your real approaches and these numbers start learning you. Saved to your account."
+        : "Log your real approaches and these numbers start learning you. Sign in to save them across devices.";
       return;
     }
     var dir = r.personal >= 1 ? "up " + Math.round((r.personal - 1) * 100) + "%"
                               : "down " + Math.round((1 - r.personal) * 100) + "%";
     el.textContent = "Tuned to your " + st.n + " logged approach" + (st.n === 1 ? "" : "es") +
-      " (" + st.successes + " number" + (st.successes === 1 ? "" : "s") + "). Your odds adjusted " + dir + ".";
+      " (" + st.successes + " number" + (st.successes === 1 ? "" : "s") + "). Your odds adjusted " + dir + "." +
+      (currentUser ? " Synced to your account." : " Sign in to save these.");
   }
 
   function showStep(i) {
@@ -717,6 +787,10 @@
     document.getElementById("startBtn").addEventListener("click", dismissWelcome);
     var brandEl = document.querySelector(".brand");
     if (brandEl) brandEl.addEventListener("click", showWelcome);
+    document.getElementById("accountBtn").addEventListener("click", handleAccount);
+    document.getElementById("welcomeContribute").addEventListener("click", openContribute);
+    document.getElementById("contribClose").addEventListener("click", closeContribute);
+    document.getElementById("contribSubmit").addEventListener("click", submitContribution);
 
     document.getElementById("shareBtn").addEventListener("click", function () {
       if (!SHARE || !lastResult) return;
@@ -746,14 +820,27 @@
   function logOutcome(success) {
     // Log against the BASE prediction (pre-calibration) to avoid feedback loops.
     var base = lastResult ? lastResult.p / Math.max(0.001, lastResult.personal) : 0.05;
-    STORE.log(base, success);
-    render();
+    if (currentUser && window.TB_SUPA) {
+      window.TB_SUPA.saveAttempt({
+        predicted: base, success: success,
+        venue: state.venue, time_of_day: state.timeOfDay, day_type: state.dayType
+      }).then(refreshCloudStats);
+    } else {
+      STORE.log(base, success);
+      render();
+    }
+  }
+
+  function refreshCloudStats() {
+    if (!currentUser || !window.TB_SUPA) { cloudStats = null; render(); return; }
+    window.TB_SUPA.attemptStats().then(function (st) { cloudStats = st; render(); });
   }
 
   // -------------------- boot --------------------
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     initWelcome();
+    initSupa();
     if (SHARE) {
       var urlState = SHARE.readUrlState();
       if (urlState) Object.keys(urlState).forEach(function (k) { state[k] = urlState[k]; });
