@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Cold Approach Odds</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+
+    <!-- Live, always-updating estimate -->
+    <header class="gauge-wrap" aria-live="polite">
+      <svg class="gauge" viewBox="0 0 120 120" role="img" aria-label="Success probability">
+        <circle class="gauge-track" cx="60" cy="60" r="52" />
+        <circle class="gauge-fill" cx="60" cy="60" r="52" id="gaugeFill" />
+      </svg>
+      <div class="gauge-center">
+        <div class="gauge-pct" id="gaugePct">—</div>
+        <div class="gauge-sub">per approach</div>
+      </div>
+      <p class="gauge-caption" id="gaugeCaption">Answer the prompts — the odds update live.</p>
+    </header>
+
+    <!-- Progress -->
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+    <!-- Steps -->
+    <section class="card">
+
+      <div class="step" data-step="0">
+        <h2>How old are you?</h2>
+        <p class="hint">Sets the band of women statistically open to your age.</p>
+        <output class="big" id="ageOut">30</output>
+        <input type="range" id="manAge" min="18" max="70" value="30" />
+      </div>
+
+      <div class="step" data-step="1" hidden>
+        <h2>How tall are you?</h2>
+        <p class="hint">Women's preference curves reward height — with a plateau.</p>
+        <output class="big" id="heightOut">5'10"</output>
+        <input type="range" id="heightIn" min="58" max="84" value="70" />
+      </div>
+
+      <div class="step" data-step="2" hidden>
+        <h2>Your background</h2>
+        <p class="hint">Optional. Left neutral by default — see the method notes for why.</p>
+        <select id="race" class="select"></select>
+      </div>
+
+      <div class="step" data-step="3" hidden>
+        <h2>Who are you interested in?</h2>
+        <p class="hint">Defines your candidate pool by age.</p>
+        <div class="range-row">
+          <label>From <output id="minOut">25</output></label>
+          <input type="range" id="targetMin" min="18" max="70" value="25" />
+        </div>
+        <div class="range-row">
+          <label>To <output id="maxOut">35</output></label>
+          <input type="range" id="targetMax" min="18" max="70" value="35" />
+        </div>
+      </div>
+
+      <div class="step" data-step="4" hidden>
+        <h2>Where are you approaching?</h2>
+        <p class="hint">Venues differ wildly in how welcome a cold approach is.</p>
+        <select id="venue" class="select"></select>
+      </div>
+
+      <div class="step" data-step="5" hidden>
+        <h2>How's your delivery?</h2>
+        <p class="hint">The biggest lever you actually control. Be honest.</p>
+        <div class="segmented" id="confidence"></div>
+        <p class="conf-label" id="confLabel"></p>
+      </div>
+
+      <div class="step" data-step="6" hidden>
+        <h2>Your odds</h2>
+        <div class="breakdown" id="breakdown"></div>
+        <div class="reality" id="reality"></div>
+        <details class="method">
+          <summary>How this is calculated</summary>
+          <p>Your per-approach chance is the product of independent factors:
+             <em>single → open to dating → accepts your age → clears the height bar
+             → venue is receptive → your delivery.</em></p>
+          <p>Numbers are directional estimates drawn from public research
+             (U.S. Census/ACS marital status, Pew Research on singles, OkCupid
+             age-preference data, height-preference surveys). Venue and delivery
+             figures are estimates. This is entertainment and a nudge toward the
+             factors you control — not a guarantee. Approach respectfully and
+             read the room.</p>
+        </details>
+      </div>
+
+      <nav class="nav">
+        <button id="backBtn" class="btn ghost" type="button">Back</button>
+        <button id="nextBtn" class="btn" type="button">Next</button>
+      </nav>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
